@@ -9,11 +9,11 @@ import * as defaultIDL from 'raw-loader!./default-schema.graphql';
 import * as fakeIDL from 'raw-loader!./fake_definition.graphql';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import GraphQLEditor from './GraphQLEditor/GraphQLEditor';
-import './GraphQLEditor/editor.css';
 import './css/app.css';
 import './css/codemirror.css';
+import './css/schema-editor.css';
 import { ConsoleIcon, EditIcon, GithubIcon } from './icons';
+
 
 type GenieEditorState = {
   value: string | null;
@@ -143,7 +143,7 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
   render() {
     let { value, activeTab, schema , dirty, dirtySchema } = this.state;
     return (
-      <div className="faker-editor-container">
+      <div className="genie-editor-container">
         <nav>
           <div className="logo">
             <a href="https://github.com/APIs-guru/graphql-faker" target="_blank">
@@ -182,14 +182,20 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
         </nav>
         <div className="tabs-container">
           <div
-            className={classNames('tab-content', 'editor-container', {
+            className={classNames('schema-editor', 'tab-content', 'editor-container', {
               '-active': activeTab === 0,
             })}
           >
-            <GraphQLEditor
+						{ activeTab === 0 &&
+								<style dangerouslySetInnerHTML={{__html: `
+								.CodeMirror-lint-tooltip { display: none!important; }
+							`}} />
+						}
+							
+						
+            <GraphiQL.QueryEditor
               schema={dirtySchema || schema}
               onEdit={this.onEdit}
-              onCommand={this.saveUserIDL}
               value={value || ''}
             />
             <div className="action-panel">

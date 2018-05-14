@@ -2,17 +2,17 @@ body {
   font-family: system, -apple-system, 'San Francisco', '.SFNSDisplay-Regular', 'Segoe UI', Segoe, 'Segoe WP', 'Helvetica Neue', helvetica, 'Lucida Grande', arial, sans-serif;
 }
 
-.faker-editor-container {
+.genie-editor-container {
   display: flex;
   height: 100vh;
 }
 
-.faker-editor-container > nav {
+.genie-editor-container > nav {
   width: 60px;
-  background-color: #59155a;
+  background-color: #3982b7;
 }
 
-.faker-editor-container > .tabs-container {
+.genie-editor-container > .tabs-container {
   flex: 1;
   overflow: hidden;
 }
@@ -55,7 +55,7 @@ nav li.-active::after {
   top: 0;
   bottom: 0;
   right: 0px;
-  border-right: 4px solid #e535ab;
+  border-right: 4px solid #f3b556;
 }
 
 nav li:hover {
@@ -107,7 +107,7 @@ nav > .logo {
 .editor-container.-active {
   display: flex;
 }
-.editor-container > .graphql-editor {
+.editor-container > .query-editor {
   flex: 1;
   overflow: hidden;
 }
@@ -135,7 +135,7 @@ nav > .logo {
   border-radius: 2px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
 
-  background-color: #1c5a15;
+  background-color: #3982b7;
   color: #ecf0f1;
 
   transition: background-color .3s;
@@ -146,7 +146,7 @@ nav > .logo {
 }
 
 .material-button:hover, .material-button:focus {
-  background-color: #2c6a25;
+  background-color: #67b5f2;
 }
 
 .material-button > * {
@@ -173,7 +173,7 @@ nav > .logo {
 
 .material-button.-disabled,
 .material-button.-disabled:hover {
-  background-color: #5d795a;
+  background-color: gray;
   cursor: default;
   user-select: none;
 }
