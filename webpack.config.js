@@ -1,6 +1,8 @@
 const webpack = require('webpack');
 const path = require('path');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+//const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 function root(args) {
   args = Array.prototype.slice.call(arguments, 0);
   return path.join.apply(path, [__dirname].concat(args));
@@ -8,7 +10,7 @@ function root(args) {
 
 module.exports = {
   devtool: 'cheap-source-map',
-
+	mode: 'development',
   performance: {
     hints: false,
   },
@@ -16,23 +18,24 @@ module.exports = {
     contentBase: root('.'),
     watchContentBase: true,
     port: 9090,
-    stats: 'errors-only',
-    proxy: {
-      '/user-idl': 'http://localhost:9002',
-      '/graphql': 'http://localhost:9002',
-    },
+    stats: 'errors-only'
   },
   resolve: {
     extensions: ['.jsx', '.js', '.tsx', 'ts', '.json'],
   },
-  entry: ['./index.tsx'],
+  entry: ['./src/index.tsx'],
   output: {
     path: root('.'),
-    filename: 'main.js',
+    filename: 'dist/main.js',
     sourceMapFilename: '[file].map',
   },
   module: {
     rules: [
+			{
+				test: /\.mjs$/,
+				include: /node_modules/,
+				type: 'javascript/auto',
+			},
       {
         test: /.[jt]sx?$/,
         loader: 'awesome-typescript-loader',
@@ -40,33 +43,30 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        use: ExtractTextPlugin.extract({
-          fallback: 'style-loader',
-          use: [
-            {
-              loader: 'css-loader',
-              options: {
-                sourceMap: true,
-                minimize: true,
-              },
-            },
-            'postcss-loader?sourceMap',
-          ],
-        }),
+        use: [
+          MiniCssExtractPlugin.loader,
+          'css-loader'
+        ]
       },
     ],
   },
 
   plugins: [
-    new webpack.LoaderOptionsPlugin({
-      minimize: true,
-      debug: false,
-    }),
-    new ExtractTextPlugin({
-      filename: 'main.css',
+    new MiniCssExtractPlugin({
+      filename: 'dist/main.css',
       allChunks: true,
     }),
     // Workaround for https://github.com/graphql/graphql-language-service/issues/128
     new webpack.IgnorePlugin(/\.js\.flow$/, /graphql-language-service-interface[\\/]dist$/)
-  ],
+	],
+	optimization: {
+    minimizer: [
+      // new UglifyJsPlugin({
+      //   cache: true,
+      //   parallel: true,
+      //   sourceMap: true // set to true if you want JS source maps
+      // }),
+      new OptimizeCSSAssetsPlugin({})
+    ]
+  },
 };

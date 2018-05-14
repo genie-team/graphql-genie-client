@@ -1,20 +1,21 @@
-import './css/app.css';
-import './css/codemirror.css';
-import './GraphQLEditor/editor.css';
-import 'graphiql/graphiql.css';
-
+import { ApolloLink, execute } from "apollo-link";
+import { SchemaLink } from 'apollo-link-schema';
 import * as classNames from 'classnames';
 import * as GraphiQL from 'graphiql';
-import { buildSchema, extendSchema, GraphQLSchema, parse } from 'graphql';
-import * as fetch from 'isomorphic-fetch';
-import * as fakeIDL from 'raw-loader!../fake_definition.graphql';
+import 'graphiql/graphiql.css';
+import { GraphQLSchema, parse } from 'graphql';
+import { addMockFunctionsToSchema, makeExecutableSchema } from 'graphql-tools';
+import * as defaultIDL from 'raw-loader!./default-schema.graphql';
+import * as fakeIDL from 'raw-loader!./fake_definition.graphql';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-
 import GraphQLEditor from './GraphQLEditor/GraphQLEditor';
+import './GraphQLEditor/editor.css';
+import './css/app.css';
+import './css/codemirror.css';
 import { ConsoleIcon, EditIcon, GithubIcon } from './icons';
 
-type FakeEditorState = {
+type GenieEditorState = {
   value: string | null;
   cachedValue: string | null;
   activeTab: number;
@@ -23,10 +24,10 @@ type FakeEditorState = {
   status: string | null;
   schema: GraphQLSchema | null;
   dirtySchema: GraphQLSchema | null;
-  proxiedSchemaIDL: string | null;
+	link: ApolloLink | null;	
 };
 
-class FakeEditor extends React.Component<any, FakeEditorState> {
+class GenieEditor extends React.Component<any, GenieEditorState> {
 
   constructor(props) {
     super(props);
@@ -40,73 +41,53 @@ class FakeEditor extends React.Component<any, FakeEditorState> {
       error: null,
       status: null,
       schema: null,
-      proxiedSchemaIDL: null,
+			link: null
     };
   }
 
   componentDidMount() {
-    this.fetcher('/user-idl')
-      .then(response => response.json())
-      .then(IDLs => {
-        this.updateValue(IDLs);
-      });
-
+		this.updateIdl(defaultIDL);
     window.onbeforeunload = () => {
       if (this.state.dirty) return 'You have unsaved changes. Exit?';
     };
   }
 
-  fetcher(url, options = {}) {
-    const baseUrl = '..'
-    return fetch(baseUrl + url, {
-      credentials: 'include',
-      ...options,
-    });
+  graphQLFetcher({query, variables = {}}) {
+		if (this.state.link !== null) {
+			return execute(this.state.link, {
+				query: parse(query),
+				variables: variables
+			});
+		}    
   }
 
-  graphQLFetcher(graphQLParams) {
-    return this.fetcher('/graphql', {
-      method: 'post',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(graphQLParams),
-    }).then(response => response.json());
-  }
 
-  updateValue({ schemaIDL, extensionIDL }) {
-    let value = extensionIDL || schemaIDL;
-    const proxiedSchemaIDL = extensionIDL ? schemaIDL : null;
+  buildSchema(value): GraphQLSchema {
+		const schema = makeExecutableSchema({ typeDefs: value + '\n' + fakeIDL });
+		addMockFunctionsToSchema({
+			schema
+		});
+		return schema;
+	}
+	
+	getLink(schema = this.state.schema): ApolloLink | null {
+		let link: ApolloLink | null = null;
+		if (schema !== null) {
+			link = new SchemaLink({ schema });
+		}
 
-    this.setState({
-      value,
-      cachedValue: value,
-      proxiedSchemaIDL,
-    });
-    this.updateIdl(value, true);
-  }
-
-  postIDL(idl) {
-    return this.fetcher('/user-idl', {
-      method: 'post',
-      headers: { 'Content-Type': 'text/plain' },
-      body: idl,
-    });
-  }
-
-  buildSchema(value) {
-    if (this.state.proxiedSchemaIDL) {
-      let schema = buildSchema(this.state.proxiedSchemaIDL + '\n' + fakeIDL);
-      return extendSchema(schema, parse(value));
-    } else {
-      return buildSchema(value + '\n' + fakeIDL);
-    }
-  }
+		return link;
+	}
 
   updateIdl(value, noError = false) {
     try {
-      const schema = this.buildSchema(value);
+			const schema = this.buildSchema(value);
+			const link = this.getLink(schema);
       this.setState(prevState => ({
-        ...prevState,
-        schema,
+				...prevState,
+				value,
+				schema,
+				link,
         error: null,
       }));
       return true;
@@ -129,27 +110,15 @@ class FakeEditor extends React.Component<any, FakeEditorState> {
     let { value, dirty } = this.state;
     if (!dirty) return;
 
-    if (!this.updateIdl(value)) return;
-
-    this.postIDL(value).then(res => {
-      if (res.ok) {
-        this.setStatus('Saved!', 2000);
-        return this.setState(prevState => ({
-          ...prevState,
-          cachedValue: value,
-          dirty: false,
-          dirtySchema: null,
-          error: null,
-        }));
-      } else {
-        res.text().then(errorMessage => {
-          return this.setState(prevState => ({
-            ...prevState,
-            error: errorMessage,
-          }));
-        });
-      }
-    });
+		if (!this.updateIdl(value)) return;
+		
+		return this.setState(prevState => ({
+			...prevState,
+			cachedValue: value,
+			dirty: false,
+			dirtySchema: null,
+			error: null,
+		}));
   };
 
   switchTab(tab) {
@@ -252,4 +221,4 @@ class FakeEditor extends React.Component<any, FakeEditorState> {
   }
 }
 
-ReactDOM.render(<FakeEditor />, document.getElementById('container'));
+ReactDOM.render(<GenieEditor />, document.getElementById('container'));

@@ -1,28 +1,16 @@
 {
   "compilerOptions": {
-    "inlineSources": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "module": "commonjs",
-    "target": "es5",
-    "noImplicitAny": false,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "preserveConstEnums": true,
+    "strictNullChecks": true,
     "sourceMap": true,
-    "outDir": "dist",
-    "pretty": true,
+    "target": "es5",
+		"outDir": "dist",
+		"sourceRoot": "src",
     "moduleResolution": "node",
-    "lib": [
-      "es2017",
-      "esnext.asynciterable"
-    ]
+    "allowJs": true,
+    "lib": ["es2016", "es2017", "esnext.asynciterable", "dom"],
+    "jsx": "react"
   },
-  "compileOnSave": false,
-  "exclude": [
-    "src/editor",
-    "node_modules",
-    ".tmp",
-    "dist",
-    "lib"
-  ]
+  "exclude": ["node_modules", "dist"],
+  "include": ["./custom.d.ts", "**/*.tsx", "**/*.ts"]
 }
