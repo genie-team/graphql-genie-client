@@ -2,6 +2,17 @@ body {
   font-family: system, -apple-system, 'San Francisco', '.SFNSDisplay-Regular', 'Segoe UI', Segoe, 'Segoe WP', 'Helvetica Neue', helvetica, 'Lucida Grande', arial, sans-serif;
 }
 
+ion-icon {
+	font-size: 24px;
+}
+ion-icon[name="logo-github"] {
+	font-size: 30px;
+}
+
+.white-link {
+	color: white;
+}
+
 .genie-editor-container {
   display: flex;
   height: 100vh;

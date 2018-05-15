@@ -1,4 +1,4 @@
-import { ApolloLink, execute } from "apollo-link";
+import { ApolloLink, execute } from 'apollo-link';
 import { SchemaLink } from 'apollo-link-schema';
 import * as classNames from 'classnames';
 import * as GraphiQL from 'graphiql';
@@ -12,8 +12,6 @@ import * as ReactDOM from 'react-dom';
 import './css/app.css';
 import './css/codemirror.css';
 import './css/schema-editor.css';
-import { ConsoleIcon, EditIcon, GithubIcon } from './icons';
-
 
 type GenieEditorState = {
   value: string | null;
@@ -24,32 +22,32 @@ type GenieEditorState = {
   status: string | null;
   schema: GraphQLSchema | null;
   dirtySchema: GraphQLSchema | null;
-	link: ApolloLink | null;	
+	link: ApolloLink | null;
 };
 
 class GenieEditor extends React.Component<any, GenieEditorState> {
 
   constructor(props) {
-    super(props);
+	super(props);
 
-    this.state = {
-      value: null,
-      cachedValue: null,
-      activeTab: 0,
-      dirty: false,
-      dirtySchema: null,
-      error: null,
-      status: null,
-      schema: null,
-			link: null
-    };
+	this.state = {
+		value: null,
+		cachedValue: null,
+		activeTab: 0,
+		dirty: false,
+		dirtySchema: null,
+		error: null,
+		status: null,
+		schema: null,
+		link: null
+	};
   }
 
   componentDidMount() {
 		this.updateIdl(defaultIDL);
-    window.onbeforeunload = () => {
-      if (this.state.dirty) return 'You have unsaved changes. Exit?';
-    };
+	window.onbeforeunload = () => {
+		if (this.state.dirty) return 'You have unsaved changes. Exit?';
+	};
   }
 
   graphQLFetcher({query, variables = {}}) {
@@ -58,9 +56,8 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 				query: parse(query),
 				variables: variables
 			});
-		}    
+		}
   }
-
 
   buildSchema(value): GraphQLSchema {
 		const schema = makeExecutableSchema({ typeDefs: value + '\n' + fakeIDL });
@@ -69,7 +66,7 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 		});
 		return schema;
 	}
-	
+
 	getLink(schema = this.state.schema): ApolloLink | null {
 		let link: ApolloLink | null = null;
 		if (schema !== null) {
@@ -80,38 +77,38 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 	}
 
   updateIdl(value, noError = false) {
-    try {
+	try {
 			const schema = this.buildSchema(value);
 			const link = this.getLink(schema);
-      this.setState(prevState => ({
+		this.setState(prevState => ({
 				...prevState,
 				value,
 				schema,
 				link,
-        error: null,
-      }));
-      return true;
-    } catch (e) {
-      if (noError) return;
-      this.setState(prevState => ({ ...prevState, error: e.message }));
-      return false;
-    }
+		error: null,
+		}));
+		return true;
+	} catch (e) {
+		if (noError) return;
+		this.setState(prevState => ({ ...prevState, error: e.message }));
+		return false;
+	}
   }
 
   setStatus(status, delay) {
-    this.setState(prevState => ({ ...prevState, status: status }));
-    if (!delay) return;
-    setTimeout(() => {
-      this.setState(prevState => ({ ...prevState, status: null }));
-    }, delay);
+	this.setState(prevState => ({ ...prevState, status: status }));
+	if (!delay) return;
+	setTimeout(() => {
+		this.setState(prevState => ({ ...prevState, status: null }));
+	}, delay);
   }
 
   saveUserIDL = () => {
-    let { value, dirty } = this.state;
-    if (!dirty) return;
+	const { value, dirty } = this.state;
+	if (!dirty) return;
 
 		if (!this.updateIdl(value)) return;
-		
+
 		return this.setState(prevState => ({
 			...prevState,
 			cachedValue: value,
@@ -119,111 +116,112 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 			dirtySchema: null,
 			error: null,
 		}));
-  };
+  }
 
   switchTab(tab) {
-    this.setState(prevState => ({ ...prevState, activeTab: tab }));
+	this.setState(prevState => ({ ...prevState, activeTab: tab }));
   }
 
   onEdit = (val) => {
-    if (this.state.error) this.updateIdl(val);
-    let dirtySchema = null as GraphQLSchema | null;
-    try {
-      dirtySchema = this.buildSchema(val);
-    } catch(_) { }
+	if (this.state.error) this.updateIdl(val);
+	let dirtySchema = null as GraphQLSchema | null;
+	try {
+		dirtySchema = this.buildSchema(val);
+	} catch (_) {
+		// empty by design
+	}
 
-    this.setState(prevState => ({
-      ...prevState,
-      value: val,
-      dirty: val !== this.state.cachedValue,
-      dirtySchema,
-    }));
-  };
+	this.setState(prevState => ({
+		...prevState,
+		value: val,
+		dirty: val !== this.state.cachedValue,
+		dirtySchema,
+	}));
+  }
 
   render() {
-    let { value, activeTab, schema , dirty, dirtySchema } = this.state;
-    return (
-      <div className="genie-editor-container">
-        <nav>
-          <div className="logo">
-            <a href="https://github.com/APIs-guru/graphql-faker" target="_blank">
-              {' '}
-              <img src="./logo.svg" />{' '}
-            </a>
-          </div>
-          <ul>
-            <li
-              onClick={() => this.switchTab(0)}
-              className={classNames({
-                '-active': activeTab === 0,
-                '-dirty': dirty,
-              })}
-            >
-              {' '}
-              <EditIcon />{' '}
-            </li>
-            <li
-              onClick={() => this.state.schema && this.switchTab(1)}
-              className={classNames({
-                '-disabled': !this.state.schema,
-                '-active': activeTab === 1,
-              })}
-            >
-              {' '}
-              <ConsoleIcon />{' '}
-            </li>
-            <li className="-pulldown -link">
-              <a href="https://github.com/APIs-guru/graphql-faker" target="_blank">
-                {' '}
-                <GithubIcon />{' '}
-              </a>
-            </li>
-          </ul>
-        </nav>
-        <div className="tabs-container">
-          <div
-            className={classNames('schema-editor', 'tab-content', 'editor-container', {
-              '-active': activeTab === 0,
-            })}
-          >
+	const { value, activeTab, schema , dirty, dirtySchema } = this.state;
+	return (
+		<div className="genie-editor-container">
+		<nav>
+			<div className="logo">
+			<a href="https://github.com/genie-team" target="_blank">
+				{' '}
+				<img src="./logo.svg" />{' '}
+			</a>
+			</div>
+			<ul>
+			<li
+				onClick={() => this.switchTab(0)}
+				className={classNames({
+				'-active': activeTab === 0,
+				'-dirty': dirty,
+				})}
+			>
+				{' '}
+				<ion-icon name="create"></ion-icon>{' '}
+			</li>
+			<li
+				onClick={() => this.state.schema && this.switchTab(1)}
+				className={classNames({
+				'-disabled': !this.state.schema,
+				'-active': activeTab === 1,
+				})}
+			>
+				{' '}
+				<ion-icon name="search" ></ion-icon>{' '}
+			</li>
+			<li className="-pulldown -link">
+				<a className="white-link" href="https://github.com/genie-team" target="_blank">
+				{' '}
+				<ion-icon name="logo-github" ></ion-icon>{' '}
+				</a>
+			</li>
+			</ul>
+		</nav>
+		<div className="tabs-container">
+			<div
+			className={classNames('schema-editor', 'tab-content', 'editor-container', {
+				'-active': activeTab === 0,
+			})}
+			>
 						{ activeTab === 0 &&
 								<style dangerouslySetInnerHTML={{__html: `
 								.CodeMirror-lint-tooltip { display: none!important; }
 							`}} />
 						}
-							
-						
-            <GraphiQL.QueryEditor
-              schema={dirtySchema || schema}
-              onEdit={this.onEdit}
-              value={value || ''}
-            />
-            <div className="action-panel">
-              <a
-                className={classNames("material-button", {
-                  '-disabled': !dirty,
-                })}
-                onClick={this.saveUserIDL}>
-                <span> Save </span>
-              </a>
-              <div className="status-bar">
-                <span className="status"> {this.state.status} </span>
-                <span className="error-message">{this.state.error}</span>
-              </div>
-            </div>
-          </div>
-          <div
-            className={classNames('tab-content', {
-              '-active': activeTab === 1,
-            })}
-          >
-            {this.state.schema && (
-              <GraphiQL fetcher={e => this.graphQLFetcher(e)} schema={this.state.schema} />
-            )}
-          </div>
-        </div>
-      </div>
-    );
+
+			<GraphiQL.QueryEditor
+				schema={dirtySchema || schema}
+				onEdit={this.onEdit}
+				value={value || ''}
+			/>
+			<div className="action-panel">
+				<a
+				className={classNames('material-button', {
+					'-disabled': !dirty,
+				})}
+				onClick={this.saveUserIDL}>
+				<span> Save </span>
+				</a>
+				<div className="status-bar">
+				<span className="status"> {this.state.status} </span>
+				<span className="error-message">{this.state.error}</span>
+				</div>
+			</div>
+			</div>
+			<div
+			className={classNames('tab-content', {
+				'-active': activeTab === 1,
+			})}
+			>
+			{this.state.schema && (
+				<GraphiQL fetcher={e => this.graphQLFetcher(e)} schema={this.state.schema} />
+			)}
+			</div>
+		</div>
+		</div>
+	);
   }
 }
 
