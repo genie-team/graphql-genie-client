@@ -1,12 +1,21 @@
 body {
-  font-family: system, -apple-system, 'San Francisco', '.SFNSDisplay-Regular', 'Segoe UI', Segoe, 'Segoe WP', 'Helvetica Neue', helvetica, 'Lucida Grande', arial, sans-serif;
+	font-family: system, -apple-system, 'San Francisco', '.SFNSDisplay-Regular', 'Segoe UI', Segoe, 'Segoe WP', 'Helvetica Neue', helvetica, 'Lucida Grande', arial, sans-serif;
 }
 
 ion-icon {
-	font-size: 24px;
-}
-ion-icon[name="logo-github"] {
 	font-size: 30px;
+}
+
+.toolbar ion-icon {
+	width: 14px;
+	font-size: 14px;
+	display: inline-flex;
+	align-self: center;
+}
+
+.toolbar ion-icon .icon-inner {
+	top: .145em;
+	position: relative;
 }
 
 .white-link {
@@ -14,194 +23,174 @@ ion-icon[name="logo-github"] {
 }
 
 .genie-editor-container {
-  display: flex;
-  height: 100vh;
+	display: flex;
+	height: 100vh;
 }
 
-.genie-editor-container > nav {
-  width: 60px;
-  background-color: #3982b7;
+.genie-editor-container>nav {
+	width: 60px;
+	background-color: #3982b7;
 }
 
-.genie-editor-container > .tabs-container {
-  flex: 1;
-  overflow: hidden;
+.genie-editor-container>.tabs-container {
+	flex: 1;
+	overflow: hidden;
 }
 
 .tab-content {
-  overflow: hidden;
-  height: 0;
+	overflow: hidden;
+	height: 0;
 }
 
 .tab-content.-active {
-  display: block;
-  height: 100%;
+	display: block;
+	height: 100%;
 }
 
-nav > ul {
-  margin: 0;
-  list-style: none;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  color: white;
-  height: calc(100% - 60px);
+
+nav>ul {
+	margin: 0;
+	list-style: none;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	color: white;
+	height: calc(100% - 60px);
+	overflow-y: auto;
+	overflow-x: hidden;
 }
 
 nav li {
-  display: inline-block;
-  padding: 15px 14px 15px 10px;
-  cursor: pointer;
-  position: relative;
-  text-align: center;
+	display: inline-block;
+	padding: 15px 14px 15px 10px;
+	cursor: pointer;
+	position: relative;
+	text-align: center;
 }
 
 nav li.-active {
-  background-color: rgba(255, 255, 255, 0.2);
+	background-color: rgba(255, 255, 255, 0.2);
 }
+
 nav li.-active::after {
-  content: "";
-  display: block;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 0px;
-  border-right: 4px solid #f3b556;
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: 0px;
+	border-right: 4px solid #f3b556;
 }
 
 nav li:hover {
-  background: rgba(255, 255, 255, 0.1);
+	background: rgba(255, 255, 255, 0.1);
 }
 
 nav li.-dirty::before {
-  content: "*";
-  color: white;
-  font-weight: bold;
-  position: absolute;
-  right: 10px;
+	content: "*";
+	color: white;
+	font-weight: bold;
+	position: absolute;
+	right: 10px;
 }
 
-nav li.-disabled, nav li.-disabled:hover {
-  cursor: default;
-  background: transparent;
+nav li.-disabled,
+nav li.-disabled:hover {
+	cursor: default;
+	background: transparent;
 }
 
-nav li.-disabled path, nav li.-disabled:hover path {
-  fill: rgba(255, 255, 255, 0.2);
+nav li.-disabled path,
+nav li.-disabled:hover path {
+	fill: rgba(255, 255, 255, 0.2);
 }
 
-nav li.-pulldown {
-  margin-top: auto;
+nav div.-pulldown {
+	margin-top: auto;
 }
 
-
-nav li.-link {
-  padding: 0;
+nav div li {
+	width: 100%;
+	padding: 15px 0px 15px 0px;
 }
 
-nav li.-link > a {
-  display: inline-block;
-  padding: 15px 14px 15px 10px;
+nav li.-link>a {
+	display: inline-block;
 }
 
-
-nav > .logo {
-  padding: 5px;
+nav>.logo {
+	padding: 5px;
 }
-
 
 .editor-container {
-  display: flex;
-  flex-direction: column;
+	display: flex;
+	flex-direction: column;
 }
 
 .editor-container.-active {
-  display: flex;
+	display: flex;
 }
-.editor-container > .query-editor {
-  flex: 1;
-  overflow: hidden;
+
+.editor-container>.query-editor {
+	flex: 1;
+	overflow: hidden;
 }
 
 .action-panel {
-  padding: 10px 40px;
-  background: #f2f2f2;
-  display: flex;
-  align-items: center;
+	padding: 10px 40px;
+	background: #eeeeee;
+	border-top: 1px solid #e0e0e0;
+	display: flex;
+	align-items: center;
 }
 
-.material-button {
-  position: relative;
-
-  display: inline-block;
-  min-width: 160px;
-  text-align: center;
-  font-size: 14px;
-  padding: 0;
-
-  overflow: hidden;
-
-  border-width: 0;
-  outline: none;
-  border-radius: 2px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
-
-  background-color: #3982b7;
-  color: #ecf0f1;
-
-  transition: background-color .3s;
-  cursor: pointer;
-  text-transform: uppercase;
-  user-select: none;
-  letter-spacing: 2px;
+.save-button {
+	min-width: 160px;
+	text-align: center;
+	font-size: 14px;
+	background-color: #3982b7;
+	color: #ecf0f1;
+	transition: background-color .3s;
+	text-transform: uppercase;
+	user-select: none;
 }
 
-.material-button:hover, .material-button:focus {
-  background-color: #67b5f2;
+.save-button:hover,
+.save-button:focus {
+	color: #67b5f2;
 }
 
-.material-button > * {
-  position: relative;
-}
-
-.material-button span {
-  display: block;
-  padding: 10px 24px;
-}
-
-.material-button:active:before {
-  content: "";
-
-  position: absolute;
-  top: 0;
-  left: 0;
-
-  display: block;
-  background-color: rgba(0, 0, 0, .2);
-  height: 100%;
-  width: 100%;
-}
-
-.material-button.-disabled,
-.material-button.-disabled:hover {
-  background-color: gray;
-  cursor: default;
-  user-select: none;
+.save-button.-disabled,
+.save-button.-disabled:hover {
+	color: #C3C3C3;
+	cursor: default;
+	user-select: none;
 }
 
 .material-button.-disabled:active::before {
-  display: none;
+	display: none;
 }
 
 .status-bar {
-  padding: 0 20px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+	padding: 0 20px;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .error-message {
-  color: red;
+	color: red;
 }
+
 .status {
-  color: #1c5a15;
+	color: #1c5a15;
+}
+
+.about-markdown {
+	padding: 15px;
+	background-color: #F6F7F8;
+	height: 100%;
+}
+
+.schema-editor .CodeMirror-lint-mark-error {
+	background-image: none;
 }
