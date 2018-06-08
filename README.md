@@ -1,4 +1,4 @@
-<div style="text-align:center"><img width="128px" src="/dist/logo.svg" alt="GraphQL Genie Client logo"></div>
+<div style="text-align:center"><img width="128px" src="/resources/logo.svg" alt="GraphQL Genie Client logo"></div>
 
 # GraphQL Genie Client
 

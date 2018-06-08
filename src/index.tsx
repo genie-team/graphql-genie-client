@@ -1,12 +1,13 @@
 import { ApolloLink, execute } from 'apollo-link';
 import { SchemaLink } from 'apollo-link-schema';
 import * as classNames from 'classnames';
+import indexedDBAdapter from 'fortune-indexeddb';
 import * as GraphiQL from 'graphiql';
 import 'graphiql/graphiql.css';
-import { GraphQLSchema, parse } from 'graphql';
-import { addMockFunctionsToSchema, makeExecutableSchema } from 'graphql-tools';
+import { parse } from 'graphql';
+import { FortuneOptions, GraphQLGenie } from 'graphql-genie';
+import { addMockFunctionsToSchema } from 'graphql-tools';
 import * as defaultIDL from 'raw-loader!./default-schema.graphql';
-import * as fakeIDL from 'raw-loader!./fake_definition.graphql';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { AboutComponent } from './about';
@@ -22,8 +23,8 @@ type GenieEditorState = {
 	dirty: boolean;
 	error: string | null;
 	status: string | null;
-	schema: GraphQLSchema | null;
-	dirtySchema: GraphQLSchema | null;
+	genie: GraphQLGenie | null;
+	dirtyGenie: GraphQLGenie | null;
 	link: ApolloLink | null;
 	data: string | null;
 };
@@ -43,10 +44,10 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 			cachedValue: null,
 			activeTab: 0,
 			dirty: false,
-			dirtySchema: null,
+			dirtyGenie: null,
 			error: null,
 			status: null,
-			schema: null,
+			genie: null,
 			link: null,
 			data: null
 		};
@@ -68,15 +69,39 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 		}
 	}
 
-	buildSchema(value): GraphQLSchema {
-		const schema = makeExecutableSchema({ typeDefs: value + '\n' + fakeIDL });
-		addMockFunctionsToSchema({
-			schema
+	buildSchema(value): Promise<GraphQLGenie> {
+		if (!value) return Promise.reject(null);
+
+		const fortuneOptions: FortuneOptions = {
+			settings: { enforceLinks: true }
+		};
+		if (this.state.data === 'db') {
+			fortuneOptions.adapter = [ indexedDBAdapter, {
+				// Name of the IndexedDB database to use. Defaults to `fortune`.
+				name: 'fortune'
+			} ];
+		}
+		const genie = new GraphQLGenie({ typeDefs: value, fortuneOptions});
+		console.log('genie created');
+		const schemaPromise: Promise<GraphQLGenie> = new Promise(resolve => {
+			genie.init().then(() => {
+				console.log('genie initialized');
+				const schema = genie.getSchema();
+				if (this.state.data === 'mock') {
+					addMockFunctionsToSchema({
+						schema,
+						preserveResolvers: false
+					});
+				}
+				resolve(genie);
+			}).catch((reason) => {
+				console.error(reason);
+			});
 		});
-		return schema;
+		return schemaPromise;
 	}
 
-	getLink(schema = this.state.schema): ApolloLink | null {
+	getLink(schema): ApolloLink | null {
 		let link: ApolloLink | null = null;
 		if (schema !== null) {
 			link = new SchemaLink({ schema });
@@ -85,23 +110,27 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 		return link;
 	}
 
-	updateIdl(value, noError = false) {
+	updateIdl(value, noError = false): Promise<boolean> {
 		try {
-			const schema = this.buildSchema(value);
-			const link = this.getLink(schema);
-			this.setState(prevState => ({
-				...prevState,
-				value,
-				copyValue: value + '\n' + fakeIDL,
-				schema,
-				link,
-				error: null,
-			}));
-			return true;
+			const schemaPromise = this.buildSchema(value);
+			return new Promise(resolve => {
+				schemaPromise.then(genie => {
+					const link = this.getLink(genie.getSchema());
+					this.setState(prevState => ({
+						...prevState,
+						value,
+						copyValue: genie.printSchema(),
+						genie,
+						link,
+						error: null,
+					}));
+				});
+				resolve(true);
+			});
 		} catch (e) {
-			if (noError) return;
+			if (noError) return Promise.resolve(false);
 			this.setState(prevState => ({ ...prevState, error: e.message }));
-			return false;
+			return Promise.resolve(false);
 		}
 	}
 
@@ -113,20 +142,20 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 		}, delay);
 	}
 
-	saveUserIDL = () => {
+	saveUserIDL = (): void => {
 		const { value, dirty } = this.state;
 		if (!dirty) return;
+		this.updateIdl(value).then(success => {
+			if (!success) return;
 
-		if (!this.updateIdl(value)) return;
-
-		return this.setState(prevState => ({
-			...prevState,
-			cachedValue: value,
-			copyValue: value + '\n' + fakeIDL,
-			dirty: false,
-			dirtySchema: null,
-			error: null,
-		}));
+			this.setState(prevState => ({
+				...prevState,
+				cachedValue: value,
+				dirty: false,
+				dirtySchema: null,
+				error: null,
+			}));
+		});
 	}
 
 	switchTab(tab) {
@@ -145,20 +174,24 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 	}
 
 	onEdit = (val) => {
-		if (this.state.error) this.updateIdl(val);
-		let dirtySchema = null as GraphQLSchema | null;
-		try {
-			dirtySchema = this.buildSchema(val);
-		} catch (_) {
-			// empty by design
+		let promise: Promise<boolean>;
+		// tslint:disable-next-line:prefer-conditional-expression
+		if (this.state.error) {
+			promise = this.updateIdl(val);
+		} else {
+			promise = Promise.resolve(true);
 		}
+		promise.then(() => {
+			this.buildSchema(val).then(dirtyGenie => {
+				this.setState(prevState => ({
+					...prevState,
+					value: val,
+					dirty: val !== this.state.cachedValue,
+					dirtyGenie,
+				}));
+			});
 
-		this.setState(prevState => ({
-			...prevState,
-			value: val,
-			dirty: val !== this.state.cachedValue,
-			dirtySchema,
-		}));
+		});
 	}
 
 	copyToClipboard = (value) => {
@@ -176,12 +209,16 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 
 	handleSettingsChange = (e) => {
 		const { name, value } = e.target;
-		this.setState({
+
+		this.setState(prevState => ({
+			...prevState,
 			[name]: value
-		});
+		}));
 	}
 	render() {
-		const {data, copyValue, value, activeTab, schema, dirty, dirtySchema } = this.state;
+		const {data, copyValue, value, activeTab, genie, dirty, dirtyGenie} = this.state;
+		const dirtySchema = dirtyGenie ? dirtyGenie.getSchema() : null;
+		const schema = genie ? genie.getSchema() : null;
 		return (
 			<div className="genie-editor-container">
 				{(activeTab === 0 || activeTab === 2) &&
@@ -192,9 +229,9 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 				}
 				<nav>
 					<div className="logo">
-						<a href="https://github.com/genie-team" target="_blank">
+						<a href="https://github.com/genie-team/graphql-genie" target="_blank">
 							{' '}
-							<img src="./logo.svg" />{' '}
+							<img src="/resources/logo.svg" />{' '}
 						</a>
 					</div>
 					<ul>
@@ -209,9 +246,9 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 							<ion-icon name="create"></ion-icon>{' '}
 						</li>
 						<li
-							onClick={() => this.state.schema && this.switchTab(1)}
+							onClick={() => this.state.genie && this.switchTab(1)}
 							className={classNames({
-								'-disabled': !this.state.schema,
+								'-disabled': !this.state.genie,
 								'-active': activeTab === 1,
 							})}
 						>
@@ -219,9 +256,9 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 							<ion-icon name="search" ></ion-icon>{' '}
 						</li>
 						<li
-							onClick={() => this.state.schema && this.switchTab(2)}
+							onClick={() => this.state.genie && this.switchTab(2)}
 							className={classNames({
-								'-disabled': !this.state.schema,
+								'-disabled': !this.state.genie,
 								'-active': activeTab === 2,
 							})}
 						>
@@ -230,7 +267,7 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 						</li>
 						<div className="-pulldown">
 							<li
-								onClick={() => this.state.schema && this.switchTab(3)}
+								onClick={() => this.state.genie && this.switchTab(3)}
 								className={classNames({
 									'-active': activeTab === 3,
 								})}
@@ -239,7 +276,7 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 								<ion-icon name="settings"></ion-icon>{' '}
 							</li>
 							<li
-								onClick={() => this.state.schema && this.switchTab(4)}
+								onClick={() => this.state.genie && this.switchTab(4)}
 								className={classNames({
 									'-active': activeTab === 4,
 								})}
@@ -304,8 +341,8 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 							'-active': activeTab === 1,
 						})}
 					>
-						{this.state.schema && (
-							<GraphiQL fetcher={e => this.graphQLFetcher(e)} schema={this.state.schema} />
+						{schema && (
+							<GraphiQL fetcher={e => this.graphQLFetcher(e)} schema={schema} />
 						)}
 					</div>
 					<div
@@ -313,7 +350,7 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 							'-active': activeTab === 2,
 						})}
 					>
-						{this.state.schema && (
+						{schema && (
 							<div className="graphiql-container">
 								<div className="editorWrap">
 

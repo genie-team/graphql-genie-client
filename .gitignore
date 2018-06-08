@@ -41,3 +41,4 @@ jspm_packages
 
 # es5 output dir
 /dist/
+.DS_Store
