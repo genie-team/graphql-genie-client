@@ -1,18 +1,38 @@
 # This is sample IDL schema for GraphQL Genie.
 #
 
-type Company {
-	id: ID!
-  name: String
-  industry: String
-  employees: [Employee!]
+interface Submission {
+	id: ID! @unique
+	text: String!
+	author: User @relation(name: "SubmissionsByUser")
 }
 
-type Employee {
-	id: ID!
-  firstName: String
-  lastName: String
-  address: String
-  subordinates: [Employee!]
-  company: Company
+type Story implements Submission {
+	id: ID! @unique
+	title: String!
+	text: String!
+	author: User @relation(name: "SubmissionsByUser")
+	likedBy: [User!] @connection @relation(name: "LikedSubmissions")
+}
+
+type Comment implements Submission {
+	id: ID! @unique
+	text: String!
+	author: User @relation(name: "SubmissionsByUser")
+	approved: Boolean @default(value: "true")
+}
+
+type User {
+	id: ID! @unique
+	email: String @unique
+	name: String
+	submissions: [Submission!] @relation(name: "SubmissionsByUser")
+	address: Address
+	liked: [Submission!] @connection @relation(name: "LikedSubmissions")
+}
+
+type Address {
+	id: ID! @unique
+	city: String!
+	user: User
 }

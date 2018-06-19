@@ -189,6 +189,7 @@ nav>.logo {
 	padding: 15px;
 	background-color: #F6F7F8;
 	height: 100%;
+	overflow: scroll;
 }
 
 .schema-editor .CodeMirror-lint-mark-error {

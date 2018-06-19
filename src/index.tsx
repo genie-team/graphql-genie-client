@@ -1,7 +1,7 @@
 import { ApolloLink, execute } from 'apollo-link';
 import { SchemaLink } from 'apollo-link-schema';
 import * as classNames from 'classnames';
-import indexedDBAdapter from 'fortune-indexeddb';
+import * as indexedDBAdapter from 'fortune-indexeddb';
 import * as GraphiQL from 'graphiql';
 import 'graphiql/graphiql.css';
 import { parse } from 'graphql';
@@ -13,6 +13,7 @@ import * as ReactDOM from 'react-dom';
 import { AboutComponent } from './about';
 import './css/app.css';
 import './css/codemirror.css';
+import './css/form.css';
 import { SettingsComponent } from './settings';
 
 type GenieEditorState = {
@@ -37,7 +38,8 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 		super(props);
 		this.queryEditorComponent = React.createRef();
 		this.queryCopierComponent = React.createRef();
-
+		const data = localStorage.getItem('settings.data') || 'memory';
+		localStorage.setItem('settings.data', data);
 		this.state = {
 			value: null,
 			copyValue: null,
@@ -49,12 +51,14 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 			status: null,
 			genie: null,
 			link: null,
-			data: null
+			data: data
 		};
 	}
 
 	componentDidMount() {
-		this.updateIdl(defaultIDL);
+		const currIDL = localStorage.getItem('currIDL') || defaultIDL;
+		localStorage.setItem('currIDL', currIDL);
+		this.updateIdl(currIDL);
 		window.onbeforeunload = () => {
 			if (this.state.dirty) return 'You have unsaved changes. Exit?';
 		};
@@ -83,7 +87,7 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 		}
 		const genie = new GraphQLGenie({ typeDefs: value, fortuneOptions});
 		console.log('genie created');
-		const schemaPromise: Promise<GraphQLGenie> = new Promise(resolve => {
+		const schemaPromise: Promise<GraphQLGenie> = new Promise((resolve, reject) => {
 			genie.init().then(() => {
 				console.log('genie initialized');
 				const schema = genie.getSchema();
@@ -94,8 +98,10 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 					});
 				}
 				resolve(genie);
-			}).catch((reason) => {
-				console.error(reason);
+			}).catch((e) => {
+				this.setState(prevState => ({ ...prevState, error: e.message }));
+				console.error(e);
+				reject(e);
 			});
 		});
 		return schemaPromise;
@@ -130,6 +136,7 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 		} catch (e) {
 			if (noError) return Promise.resolve(false);
 			this.setState(prevState => ({ ...prevState, error: e.message }));
+			console.error(e);
 			return Promise.resolve(false);
 		}
 	}
@@ -147,7 +154,7 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 		if (!dirty) return;
 		this.updateIdl(value).then(success => {
 			if (!success) return;
-
+			localStorage.setItem('currIDL', value || '');
 			this.setState(prevState => ({
 				...prevState,
 				cachedValue: value,
@@ -209,11 +216,13 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 
 	handleSettingsChange = (e) => {
 		const { name, value } = e.target;
-
+		localStorage.setItem(`settings.${name}`, value);
 		this.setState(prevState => ({
 			...prevState,
 			[name]: value
-		}));
+		}), () => {			
+			this.updateIdl(this.state.value);
+		});
 	}
 	render() {
 		const {data, copyValue, value, activeTab, genie, dirty, dirtyGenie} = this.state;
@@ -225,6 +234,7 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 					<style dangerouslySetInnerHTML={{
 						__html: `
 								.CodeMirror-lint-tooltip { display: none!important; }
+								.CodeMirror-hints { display: none!important; }
 							`}} />
 				}
 				<nav>
@@ -381,8 +391,7 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 							'-active': activeTab === 3,
 						})}
 					>
-					{data}
-						<SettingsComponent handleSettingsChange={this.handleSettingsChange}></SettingsComponent>
+						<SettingsComponent checked={data} handleSettingsChange={this.handleSettingsChange}></SettingsComponent>
 					</div>
 					<div
 						className={classNames('tab-content', {

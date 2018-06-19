@@ -7,24 +7,41 @@
 [![devDependency Status](https://david-dm.org/genie-team/graphql-genie-client/dev-status.svg)](https://david-dm.org/genie-team/graphql-genie-client/?type=dev)
 [![npm](https://img.shields.io/npm/l/graphql-genie-client.svg)](https://github.com/genie-team/graphql-genie-client/blob/master/LICENSE)
 
-
-
 A React app providing a demo and example of [GraphQL Genie](https://github.com/genie-team/graphql-genie). __No coding required__.
 All you need is to write [GraphQL Type Schema](https://graphql.org/learn/schema/) (or use the example provided). See how [GraphQL Genie](https://github.com/genie-team/graphql-genie) turns graphql type definitions into a fully featured GraphQL API with referential integrity and inverse updates. 
 
 Data can be mocked, stored in memory or stored in your browsers IndexedDB (so refreshing doesn't wipe out your data).
 
+## Settings
+
+#### Data Mode
+
+- Memory
+
+  - Mutations will save to memory and queries will query from memory. Reloading will erase all data
+
+- IndexedDB
+
+  - Mutations will save to browser database and queries will query from the database. Data will be saved on reload of page
+
+- Mock
+
+  - Mutations will do nothing, queries will return mock data
+
 ## Roadmap
+
 Ability to export data
+
 ## Development
 
 ```sh
-yarn
+npm install
 npm run build
 npm run start
 ```
 
 ## Thanks/Credit
+
 [GraphQL Faker](https://github.com/APIs-guru/graphql-faker) which I largely copied the react component
 
 [Prisma GraphQL / Graphcool](https://github.com/prismagraphql/prisma) for inspiration
