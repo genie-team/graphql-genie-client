@@ -239,7 +239,7 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 					<div className="logo">
 						<a href="https://github.com/genie-team/graphql-genie" target="_blank">
 							{' '}
-							<img src="/resources/logo.svg" />{' '}
+							<img src="resources/logo.svg" />{' '}
 						</a>
 					</div>
 					<ul>
