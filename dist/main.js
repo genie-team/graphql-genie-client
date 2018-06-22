@@ -42225,7 +42225,7 @@ exports.AboutComponent = AboutComponent;
 /* 230 */
 /***/ (function(module, exports) {
 
-module.exports = "# This is sample IDL schema for GraphQL Genie.\n#\n\ninterface Submission {\n\tid: ID! @unique\n\ttext: String!\n\tauthor: User @relation(name: \"SubmissionsByUser\")\n}\n\ntype Story implements Submission {\n\tid: ID! @unique\n\ttitle: String!\n\ttext: String!\n\tauthor: User @relation(name: \"SubmissionsByUser\")\n\tlikedBy: [User!] @connection @relation(name: \"LikedSubmissions\")\n}\n\ntype Comment implements Submission {\n\tid: ID! @unique\n\ttext: String!\n\tauthor: User @relation(name: \"SubmissionsByUser\")\n\tapproved: Boolean @default(value: \"true\")\n}\n\ntype User {\n\tid: ID! @unique\n\temail: String @unique\n\tname: String\n\tsubmissions: [Submission!] @relation(name: \"SubmissionsByUser\")\n\taddress: Address\n\tliked: [Submission!] @connection @relation(name: \"LikedSubmissions\")\n}\n\ntype Address {\n\tid: ID! @unique\n\tcity: String!\n\tuser: User\n}\n"
+module.exports = "# This is sample IDL schema for GraphQL Genie.\n#\tIt should many of the features, such as relations, connections, defaults, model, etc\n# See settings tab to change where data is read from/saved to\n# Data can be read from/saved to memory, IndexedDB (browser database that will persist), or mocked.\n\ninterface Submission {\n\tid: ID! @unique\n\ttext: String!\n\tauthor: User @relation(name: \"SubmissionsByUser\")\n}\n\ntype Story implements Submission @model {\n\tid: ID! @unique\n\ttitle: String!\n\ttext: String!\n\tauthor: User @relation(name: \"SubmissionsByUser\")\n\tlikedBy: [User!] @connection @relation(name: \"LikedSubmissions\")\n}\n\ntype Comment implements Submission @model {\n\tid: ID! @unique\n\ttext: String!\n\tauthor: User @relation(name: \"SubmissionsByUser\")\n\tapproved: Boolean @default(value: \"true\")\n}\n\ntype User @model {\n\tid: ID! @unique\n\temail: String @unique\n\tsubmissions: [Submission!] @relation(name: \"SubmissionsByUser\")\n\taddress: Address\n\tliked: [Submission!] @connection @relation(name: \"LikedSubmissions\")\n}\n\ntype Address @model {\n\tid: ID! @unique\n\tcity: String!\n\tuser: User\n}"
 
 /***/ }),
 /* 231 */
@@ -93316,6 +93316,8 @@ var GenieEditor = /** @class */ (function (_super) {
         _this.onEdit = function (val) {
             var promise;
             // tslint:disable-next-line:prefer-conditional-expression
+            _this.setState(function (prevState) { return (__assign({}, prevState, { dirty: val !== _this.state.cachedValue })); });
+            // tslint:disable-next-line:prefer-conditional-expression
             if (_this.state.error) {
                 promise = _this.updateIdl(val);
             }
@@ -93525,7 +93527,7 @@ var GenieEditor = /** @class */ (function (_super) {
                             React.createElement("ion-icon", { name: "information-circle-outline" }),
                             ' '),
                         React.createElement("li", { className: "-link" },
-                            React.createElement("a", { className: "white-link", href: "https://github.com/genie-team", target: "_blank" },
+                            React.createElement("a", { className: "white-link", href: "https://github.com/genie-team/graphql-genie", target: "_blank" },
                                 ' ',
                                 React.createElement("ion-icon", { name: "logo-github" }),
                                 ' '))))),

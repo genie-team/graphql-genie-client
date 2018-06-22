@@ -1,5 +1,7 @@
 # This is sample IDL schema for GraphQL Genie.
-#
+#	It should many of the features, such as relations, connections, defaults, model, etc
+# See settings tab to change where data is read from/saved to
+# Data can be read from/saved to memory, IndexedDB (browser database that will persist), or mocked.
 
 interface Submission {
 	id: ID! @unique
@@ -7,7 +9,7 @@ interface Submission {
 	author: User @relation(name: "SubmissionsByUser")
 }
 
-type Story implements Submission {
+type Story implements Submission @model {
 	id: ID! @unique
 	title: String!
 	text: String!
@@ -15,23 +17,22 @@ type Story implements Submission {
 	likedBy: [User!] @connection @relation(name: "LikedSubmissions")
 }
 
-type Comment implements Submission {
+type Comment implements Submission @model {
 	id: ID! @unique
 	text: String!
 	author: User @relation(name: "SubmissionsByUser")
 	approved: Boolean @default(value: "true")
 }
 
-type User {
+type User @model {
 	id: ID! @unique
 	email: String @unique
-	name: String
 	submissions: [Submission!] @relation(name: "SubmissionsByUser")
 	address: Address
 	liked: [Submission!] @connection @relation(name: "LikedSubmissions")
 }
 
-type Address {
+type Address @model {
 	id: ID! @unique
 	city: String!
 	user: User

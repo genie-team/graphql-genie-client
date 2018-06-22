@@ -181,11 +181,19 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 	onEdit = (val) => {
 		let promise: Promise<boolean>;
 		// tslint:disable-next-line:prefer-conditional-expression
+
+		this.setState(prevState => ({
+			...prevState,
+			dirty: val !== this.state.cachedValue,
+		}));
+
+		// tslint:disable-next-line:prefer-conditional-expression
 		if (this.state.error) {
 			promise = this.updateIdl(val);
 		} else {
 			promise = Promise.resolve(true);
 		}
+
 		promise.then(() => {
 			this.buildSchema(val).then(dirtyGenie => {
 				this.setState(prevState => ({
@@ -293,7 +301,7 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 								<ion-icon name="information-circle-outline" ></ion-icon>{' '}
 							</li>
 							<li className="-link">
-								<a className="white-link" href="https://github.com/genie-team" target="_blank">
+								<a className="white-link" href="https://github.com/genie-team/graphql-genie" target="_blank">
 									{' '}
 									<ion-icon name="logo-github" ></ion-icon>{' '}
 								</a>
