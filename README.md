@@ -2,10 +2,8 @@
 
 # GraphQL Genie Client
 
-[![npm version](https://img.shields.io/npm/v/graphql-genie-client.svg)](https://www.npmjs.com/package/graphql-genie-client)
 [![Dependency Status](https://david-dm.org/genie-team/graphql-genie-client.svg)](https://david-dm.org/genie-team/graphql-genie-client)
 [![devDependency Status](https://david-dm.org/genie-team/graphql-genie-client/dev-status.svg)](https://david-dm.org/genie-team/graphql-genie-client/?type=dev)
-[![npm](https://img.shields.io/npm/l/graphql-genie-client.svg)](https://github.com/genie-team/graphql-genie-client/blob/master/LICENSE)
 
 A React app providing a demo and example of [GraphQL Genie](https://github.com/genie-team/graphql-genie). __No coding required__.
 All you need is to write [GraphQL Type Schema](https://graphql.org/learn/schema/) (or use the example provided). See how [GraphQL Genie](https://github.com/genie-team/graphql-genie) turns graphql type definitions into a fully featured GraphQL API with referential integrity and inverse updates. 

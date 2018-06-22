@@ -86,10 +86,8 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 			} ];
 		}
 		const genie = new GraphQLGenie({ typeDefs: value, fortuneOptions});
-		console.log('genie created');
 		const schemaPromise: Promise<GraphQLGenie> = new Promise((resolve, reject) => {
 			genie.init().then(() => {
-				console.log('genie initialized');
 				const schema = genie.getSchema();
 				if (this.state.data === 'mock') {
 					addMockFunctionsToSchema({
@@ -220,7 +218,7 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 		this.setState(prevState => ({
 			...prevState,
 			[name]: value
-		}), () => {			
+		}), () => {
 			this.updateIdl(this.state.value);
 		});
 	}
