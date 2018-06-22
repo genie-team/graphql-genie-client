@@ -40,5 +40,4 @@ jspm_packages
 /*.graphql
 
 # es5 output dir
-/dist/
 .DS_Store
