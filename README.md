@@ -40,7 +40,7 @@ npm run start
 
 ## Thanks/Credit
 
-[GraphQL Faker](https://github.com/APIs-guru/graphql-faker) which I largely copied the react component
+[GraphQL Faker](https://github.com/APIs-guru/graphql-faker) from which I copied the react component
 
 [Prisma GraphQL / Graphcool](https://github.com/prismagraphql/prisma) for inspiration
 
