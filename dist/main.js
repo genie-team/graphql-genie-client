@@ -66270,10 +66270,10 @@ exports.default = deprecated;
 	                this.typeDefs += $typeDefs;
 	            }
 	            if (this.typeDefs.includes('@model') && !this.typeDefs.includes('directive @model')) {
-	                this.typeDefs = 'directive @model on OBJECT ' + this.typeDefs;
+	                this.typeDefs = '\ndirective @model on OBJECT' + this.typeDefs;
 	            }
 	            if (this.typeDefs.includes('@connection') && !this.typeDefs.includes('directive @connection')) {
-	                this.typeDefs = 'directive @connection on FIELD_DEFINITION' + this.typeDefs;
+	                this.typeDefs = '\ndirective @connection on FIELD_DEFINITION' + this.typeDefs;
 	            }
 	            if ((this.config.generateGetAll || this.config.generateConnections) && !this.typeDefs.includes('enum ORDER_BY_OPTIONS')) {
 	                this.typeDefs += `
@@ -93316,7 +93316,6 @@ var GenieEditor = /** @class */ (function (_super) {
         _this.onEdit = function (val) {
             var promise;
             // tslint:disable-next-line:prefer-conditional-expression
-            _this.setState(function (prevState) { return (__assign({}, prevState, { dirty: val !== _this.state.cachedValue })); });
             // tslint:disable-next-line:prefer-conditional-expression
             if (_this.state.error) {
                 promise = _this.updateIdl(val);
@@ -93404,24 +93403,30 @@ var GenieEditor = /** @class */ (function (_super) {
                     name: 'fortune'
                 }];
         }
-        var genie = new graphql_genie_1.GraphQLGenie({ typeDefs: value, fortuneOptions: fortuneOptions });
-        var schemaPromise = new Promise(function (resolve, reject) {
-            genie.init().then(function () {
-                var schema = genie.getSchema();
-                if (_this.state.data === 'mock') {
-                    graphql_tools_1.addMockFunctionsToSchema({
-                        schema: schema,
-                        preserveResolvers: false
-                    });
-                }
-                resolve(genie);
-            }).catch(function (e) {
-                _this.setState(function (prevState) { return (__assign({}, prevState, { error: e.message })); });
-                console.error(e);
-                reject(e);
+        try {
+            var genie_1 = new graphql_genie_1.GraphQLGenie({ typeDefs: value, fortuneOptions: fortuneOptions });
+            var schemaPromise = new Promise(function (resolve, reject) {
+                genie_1.init().then(function () {
+                    var schema = genie_1.getSchema();
+                    if (_this.state.data === 'mock') {
+                        graphql_tools_1.addMockFunctionsToSchema({
+                            schema: schema,
+                            preserveResolvers: false
+                        });
+                    }
+                    console.log('created schema');
+                    resolve(genie_1);
+                }).catch(function (e) {
+                    _this.setState(function (prevState) { return (__assign({}, prevState, { error: e.message })); });
+                    reject(e);
+                });
             });
-        });
-        return schemaPromise;
+            return schemaPromise;
+        }
+        catch (e) {
+            this.setState(function (prevState) { return (__assign({}, prevState, { error: e.message })); });
+            return Promise.reject(e.message);
+        }
     };
     GenieEditor.prototype.getLink = function (schema) {
         var link = null;
@@ -93440,8 +93445,10 @@ var GenieEditor = /** @class */ (function (_super) {
                     var link = _this.getLink(genie.getSchema());
                     _this.setState(function (prevState) { return (__assign({}, prevState, { value: value, copyValue: genie.printSchema(), genie: genie,
                         link: link, error: null })); });
+                    resolve(true);
+                }).catch(function (reason) {
+                    resolve(false);
                 });
-                resolve(true);
             });
         }
         catch (e) {
