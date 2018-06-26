@@ -3082,8 +3082,8 @@ graphql-genie-subscriptions@^1.0.2:
   resolved "https://registry.yarnpkg.com/graphql-genie-subscriptions/-/graphql-genie-subscriptions-1.0.3.tgz#da4028c1813fe26e039d946e044ac7f2fd9b64d9"
 
 graphql-genie@^0.1.6:
-  version "0.1.12"
-  resolved "https://registry.yarnpkg.com/graphql-genie/-/graphql-genie-0.1.12.tgz#5978d95e8c8498e9ed524c02162224f24d89dadc"
+  version "0.1.13"
+  resolved "https://registry.yarnpkg.com/graphql-genie/-/graphql-genie-0.1.13.tgz#666ff5282828b1bbd71f2675285883db6ea92773"
   dependencies:
     abab "^2.0.0"
     graphql-iso-date "^3.5.0"

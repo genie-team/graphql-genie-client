@@ -85,24 +85,29 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 				name: 'fortune'
 			} ];
 		}
-		const genie = new GraphQLGenie({ typeDefs: value, fortuneOptions});
-		const schemaPromise: Promise<GraphQLGenie> = new Promise((resolve, reject) => {
-			genie.init().then(() => {
-				const schema = genie.getSchema();
-				if (this.state.data === 'mock') {
-					addMockFunctionsToSchema({
-						schema,
-						preserveResolvers: false
-					});
-				}
-				resolve(genie);
-			}).catch((e) => {
-				this.setState(prevState => ({ ...prevState, error: e.message }));
-				console.error(e);
-				reject(e);
+		try {
+			const genie = new GraphQLGenie({ typeDefs: value, fortuneOptions});
+			const schemaPromise: Promise<GraphQLGenie> = new Promise((resolve, reject) => {
+				genie.init().then(() => {
+					const schema = genie.getSchema();
+					if (this.state.data === 'mock') {
+						addMockFunctionsToSchema({
+							schema,
+							preserveResolvers: false
+						});
+					}
+					console.log('created schema');
+					resolve(genie);
+				}).catch((e) => {
+					this.setState(prevState => ({ ...prevState, error: e.message }));
+					reject(e);
+				});
 			});
-		});
-		return schemaPromise;
+			return schemaPromise;
+		} catch (e) {
+			this.setState(prevState => ({ ...prevState, error: e.message }));
+			return Promise.reject(e.message);
+		}
 	}
 
 	getLink(schema): ApolloLink | null {
@@ -128,8 +133,10 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 						link,
 						error: null,
 					}));
+					resolve(true);
+				}).catch(reason => {
+					resolve(false);
 				});
-				resolve(true);
 			});
 		} catch (e) {
 			if (noError) return Promise.resolve(false);
@@ -181,11 +188,6 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 	onEdit = (val) => {
 		let promise: Promise<boolean>;
 		// tslint:disable-next-line:prefer-conditional-expression
-
-		this.setState(prevState => ({
-			...prevState,
-			dirty: val !== this.state.cachedValue,
-		}));
 
 		// tslint:disable-next-line:prefer-conditional-expression
 		if (this.state.error) {
