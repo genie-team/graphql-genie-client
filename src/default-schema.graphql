@@ -30,6 +30,8 @@ type User @model {
 	submissions: [Submission!] @relation(name: "SubmissionsByUser")
 	address: Address
 	liked: [Submission!] @connection @relation(name: "LikedSubmissions")
+	createdAt: DateTime @createdTimestamp
+	lastUpdatedAt: DateTime @updatedTimestamp
 }
 
 type Address @model {

@@ -66534,7 +66534,9 @@ exports.default = addResolveFunctionsToSchema;
 	                schemaDirectives: {
 	                    relation: RelationDirective,
 	                    default: DefaultDirective,
-	                    unique: UniqueDirective
+	                    unique: UniqueDirective,
+	                    createdTimestamp: CreatedTimestampDirective,
+	                    updatedTimestamp: UpdatedTimestampDirective
 	                },
 	                resolverValidationOptions: {
 	                    requireResolversForResolveType: false
@@ -66699,6 +66701,10 @@ exports.default = addResolveFunctionsToSchema;
 
 		directive @unique on FIELD_DEFINITION
 
+		directive @updatedTimestamp on FIELD_DEFINITION
+
+		directive @createdTimestamp on FIELD_DEFINITION
+
 		"""
 		An object with an ID
 		"""
@@ -66808,6 +66814,22 @@ exports.default = addResolveFunctionsToSchema;
 	        field.unique = true;
 	    }
 	}
+	class UpdatedTimestampDirective extends graphqlTools.SchemaDirectiveVisitor {
+	    visitFieldDefinition(field) {
+	        const type = field.type;
+	        if (type.name === 'DateTime') {
+	            field['updatedTimestamp'] = true;
+	        }
+	    }
+	}
+	class CreatedTimestampDirective extends graphqlTools.SchemaDirectiveVisitor {
+	    visitFieldDefinition(field) {
+	        const type = field.type;
+	        if (type.name === 'DateTime') {
+	            field.createdTimestamp = true;
+	        }
+	    }
+	}
 	class ConnectionDirective extends graphqlTools.SchemaDirectiveVisitor {
 	    visitFieldDefinition(field) {
 	        const fieldType = field.type;
@@ -66882,6 +66904,21 @@ exports.default = addResolveFunctionsToSchema;
 	            inputType = isList ? many.call(this, fieldType) : one.call(this, fieldType);
 	        }
 	        return inputType;
+	    }
+	    isAutomaticField(field) {
+	        let isAutoField = false;
+	        if (field) {
+	            if (field.name === 'id') {
+	                isAutoField = true;
+	            }
+	            else if (lodash.get(field, 'metadata.updatedTimestamp') === true) {
+	                isAutoField = true;
+	            }
+	            else if (lodash.get(field, 'metadata.createdTimestamp') === true) {
+	                isAutoField = true;
+	            }
+	        }
+	        return isAutoField;
 	    }
 	    generateInputTypeForFieldInfo(field, mutation) {
 	        let inputType;
@@ -67125,7 +67162,7 @@ exports.default = addResolveFunctionsToSchema;
 	            const fields = {};
 	            const infoType = this.schemaInfo[fieldType.name];
 	            infoType.fields.forEach(field => {
-	                if (field.name !== relationFieldName && field.name !== 'id') {
+	                if (!this.isAutomaticField(field) && field.name !== relationFieldName) {
 	                    let inputType = this.generateInputTypeForFieldInfo(field, Mutation.Create);
 	                    if (field.type.kind === 'NON_NULL') {
 	                        inputType = new _graphql.GraphQLNonNull(inputType);
@@ -67194,25 +67231,31 @@ exports.default = addResolveFunctionsToSchema;
 	    }
 	    generateCreateInput() {
 	        const name = this.type.name + 'CreateInput';
+	        const infoType = this.schemaInfo[this.type.name];
 	        const fields = {};
 	        if (_graphql.isObjectType(this.type) && !this.currInputObjectTypes.has(name)) {
+	            const infoTypeFields = infoType.fields;
 	            lodash.each(this.type.getFields(), field => {
 	                if (field.name !== 'id') {
 	                    let inputType;
 	                    if (_graphql.isInputType(field.type)) {
-	                        inputType = field.type;
+	                        const infoTypeField = infoTypeFields.find(infoTypeField => infoTypeField.name === field.name);
+	                        if (!this.isAutomaticField(infoTypeField)) {
+	                            inputType = field.type;
+	                        }
 	                    }
 	                    else if (_graphql.isObjectType(field.type)) {
 	                        inputType = this.generateInputTypeForField(field, this.generateCreateManyWithoutInput, this.generateCreateOneWithoutInput, this.generateCreateManyInput, this.generateCreateOneInput);
 	                    }
 	                    else {
-	                        const infoTypeFields = this.schemaInfo[this.type.name].fields;
 	                        inputType = this.generateInputTypeForFieldInfo(infoTypeFields.find(currField => currField.name === field.name), Mutation.Create);
 	                    }
-	                    if (_graphql.isNonNullType(field.type) && !_graphql.isNonNullType(inputType)) {
+	                    if (inputType && _graphql.isNonNullType(field.type) && !_graphql.isNonNullType(inputType)) {
 	                        inputType = new _graphql.GraphQLNonNull(inputType);
 	                    }
-	                    lodash.merge(fields, this.generateFieldForInput(field.name, inputType, lodash.get(this.schemaInfo[this.type.name].fields.find((introField) => introField.name === field.name), 'metadata.defaultValue')));
+	                    if (inputType) {
+	                        lodash.merge(fields, this.generateFieldForInput(field.name, inputType, lodash.get(this.schemaInfo[this.type.name].fields.find((introField) => introField.name === field.name), 'metadata.defaultValue')));
+	                    }
 	                }
 	            });
 	            if (lodash.isEmpty(fields)) {
@@ -67236,7 +67279,7 @@ exports.default = addResolveFunctionsToSchema;
 	            const fields = {};
 	            const infoType = this.schemaInfo[fieldType.name];
 	            infoType.fields.forEach(field => {
-	                if (field.name !== relationFieldName && field.name !== 'id') {
+	                if (!this.isAutomaticField(field) && field.name !== relationFieldName) {
 	                    const inputType = this.generateInputTypeForFieldInfo(field, Mutation.Update);
 	                    lodash.merge(fields, this.generateFieldForInput(field.name, inputType));
 	                }
@@ -67341,20 +67384,25 @@ exports.default = addResolveFunctionsToSchema;
 	        const name = this.type.name + 'UpdateInput';
 	        const fields = {};
 	        if (_graphql.isObjectType(this.type) && !this.currInputObjectTypes.has(name)) {
+	            const infoTypeFields = this.schemaInfo[this.type.name].fields;
 	            lodash.each(this.type.getFields(), field => {
 	                if (field.name !== 'id') {
 	                    let inputType;
 	                    if (_graphql.isInputType(field.type)) {
-	                        inputType = _graphql.getNullableType(field.type);
+	                        const infoTypeField = infoTypeFields.find(infoTypeField => infoTypeField.name === field.name);
+	                        if (!this.isAutomaticField(infoTypeField)) {
+	                            inputType = _graphql.getNullableType(field.type);
+	                        }
 	                    }
 	                    else if (_graphql.isObjectType(field.type)) {
 	                        inputType = this.generateInputTypeForField(field, this.generateUpdateManyWithoutInput, this.generateUpdateOneWithoutInput, this.generateUpdateManyInput, this.generateUpdateOneInput);
 	                    }
 	                    else {
-	                        const infoTypeFields = this.schemaInfo[this.type.name].fields;
 	                        inputType = this.generateInputTypeForFieldInfo(infoTypeFields.find(currField => currField.name === field.name), Mutation.Update);
 	                    }
-	                    lodash.merge(fields, this.generateFieldForInput(field.name, inputType));
+	                    if (inputType) {
+	                        lodash.merge(fields, this.generateFieldForInput(field.name, inputType));
+	                    }
 	                }
 	            });
 	            if (lodash.isEmpty(fields)) {
@@ -70656,6 +70704,26 @@ exports.default = addResolveFunctionsToSchema;
 	                                    this.uniqueIndexes.set(name, []);
 	                                }
 	                                this.uniqueIndexes.get(name).push(field.name);
+	                            }
+	                            if (lodash.get(field, 'metadata.createdTimestamp') === true) {
+	                                this.addInputHook(name, (context, record) => {
+	                                    switch (context.request.method) {
+	                                        case 'create':
+	                                            record[field.name] = new Date();
+	                                            return record;
+	                                    }
+	                                });
+	                            }
+	                            if (lodash.get(field, 'metadata.updatedTimestamp') === true) {
+	                                this.addInputHook(name, (context, _record, update) => {
+	                                    switch (context.request.method) {
+	                                        case 'update':
+	                                            if (!('replace' in update))
+	                                                update.replace = {};
+	                                            update.replace[field.name] = new Date();
+	                                            return update;
+	                                    }
+	                                });
 	                            }
 	                            currType = currType.kind === 'ENUM' ? 'String' : currType.name;
 	                            if (currType === 'ID' || currType === 'String') {

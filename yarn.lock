@@ -3096,12 +3096,12 @@ graphql-config@2.0.1:
     minimatch "^3.0.4"
 
 graphql-genie-subscriptions@^1.0.2:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/graphql-genie-subscriptions/-/graphql-genie-subscriptions-1.0.3.tgz#da4028c1813fe26e039d946e044ac7f2fd9b64d9"
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/graphql-genie-subscriptions/-/graphql-genie-subscriptions-1.0.4.tgz#c7c838232bd2b0b6964f42c0aabcdff62981c48f"
 
 graphql-genie@>=0.2.0:
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/graphql-genie/-/graphql-genie-0.2.1.tgz#5426aac6293b3bc5117d3c144442fda1dd98ccfa"
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/graphql-genie/-/graphql-genie-0.2.2.tgz#2d0fc08e915c024afbc86143761bed088408228c"
   dependencies:
     abab "^2.0.0"
     graphql-iso-date "^3.5.0"
