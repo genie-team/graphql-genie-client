@@ -41762,6 +41762,12 @@ __webpack_require__(436);
 __webpack_require__(438);
 __webpack_require__(440);
 var settings_1 = __webpack_require__(442);
+var mocks = {
+    Date: function () { return '1988-02-23'; },
+    Time: function () { return '10:30:00.000Z'; },
+    DateTime: function () { return '1988-02-23T10:30:00.000Z'; },
+    JSON: function () { return '{"superheroes": ["superman", "batman"]}'; }
+};
 var GenieEditor = /** @class */ (function (_super) {
     __extends(GenieEditor, _super);
     function GenieEditor(props) {
@@ -41875,6 +41881,7 @@ var GenieEditor = /** @class */ (function (_super) {
                     if (_this.state.data === 'mock') {
                         graphql_tools_1.addMockFunctionsToSchema({
                             schema: schema,
+                            mocks: mocks,
                             preserveResolvers: false
                         });
                     }

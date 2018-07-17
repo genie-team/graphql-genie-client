@@ -30,6 +30,13 @@ type GenieEditorState = {
 	data: string | null;
 };
 
+const mocks = {
+	Date: () => '1988-02-23',
+	Time: () => '10:30:00.000Z',
+	DateTime: () => '1988-02-23T10:30:00.000Z',
+	JSON: () => '{"superheroes": ["superman", "batman"]}'
+};
+
 class GenieEditor extends React.Component<any, GenieEditorState> {
 
 	private queryEditorComponent: GraphiQL.QueryEditor;
@@ -93,6 +100,7 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 					if (this.state.data === 'mock') {
 						addMockFunctionsToSchema({
 							schema,
+							mocks,
 							preserveResolvers: false
 						});
 					}
