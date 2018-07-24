@@ -8258,7 +8258,7 @@ LineWidget.prototype.changed = function () {
   this.height = null;
   var diff = widgetHeight(this) - oldH;
   if (!diff) { return }
-  updateLineHeight(line, line.height + diff);
+  if (!lineIsHidden(this.doc, line)) { updateLineHeight(line, line.height + diff); }
   if (cm) {
     runInOp(cm, function () {
       cm.curOp.forceUpdate = true;
@@ -9185,7 +9185,7 @@ keyMap.pcDefault = {
   "Ctrl-G": "findNext", "Shift-Ctrl-G": "findPrev", "Shift-Ctrl-F": "replace", "Shift-Ctrl-R": "replaceAll",
   "Ctrl-[": "indentLess", "Ctrl-]": "indentMore",
   "Ctrl-U": "undoSelection", "Shift-Ctrl-U": "redoSelection", "Alt-U": "redoSelection",
-  fallthrough: "basic"
+  "fallthrough": "basic"
 };
 // Very basic readline/emacs-style bindings, which are standard on Mac.
 keyMap.emacsy = {
@@ -9203,7 +9203,7 @@ keyMap.macDefault = {
   "Cmd-G": "findNext", "Shift-Cmd-G": "findPrev", "Cmd-Alt-F": "replace", "Shift-Cmd-Alt-F": "replaceAll",
   "Cmd-[": "indentLess", "Cmd-]": "indentMore", "Cmd-Backspace": "delWrappedLineLeft", "Cmd-Delete": "delWrappedLineRight",
   "Cmd-U": "undoSelection", "Shift-Cmd-U": "redoSelection", "Ctrl-Up": "goDocStart", "Ctrl-Down": "goDocEnd",
-  fallthrough: ["basic", "emacsy"]
+  "fallthrough": ["basic", "emacsy"]
 };
 keyMap["default"] = mac ? keyMap.macDefault : keyMap.pcDefault;
 
@@ -10336,6 +10336,7 @@ function CodeMirror$1(place, options) {
 
   var doc = options.value;
   if (typeof doc == "string") { doc = new Doc(doc, options.mode, null, options.lineSeparator, options.direction); }
+  else if (options.mode) { doc.modeOption = options.mode; }
   this.doc = doc;
 
   var input = new CodeMirror$1.inputStyles[options.inputStyle](this);
@@ -12239,7 +12240,7 @@ CodeMirror$1.fromTextArea = fromTextArea;
 
 addLegacyProps(CodeMirror$1);
 
-CodeMirror$1.version = "5.39.0";
+CodeMirror$1.version = "5.39.2";
 
 return CodeMirror$1;
 
@@ -36522,7 +36523,7 @@ function renderType(type) {
       var pos = this.cm.getCursor(), line = this.cm.getLine(pos.line);
       if (pos.line != this.startPos.line || line.length - pos.ch != this.startLen - this.startPos.ch ||
           pos.ch < this.startPos.ch || this.cm.somethingSelected() ||
-          (pos.ch && this.options.closeCharacters.test(line.charAt(pos.ch - 1)))) {
+          (!pos.ch || this.options.closeCharacters.test(line.charAt(pos.ch - 1)))) {
         this.close();
       } else {
         var self = this;
@@ -36624,7 +36625,8 @@ function renderType(type) {
     var widget = this, cm = completion.cm;
 
     var hints = this.hints = document.createElement("ul");
-    hints.className = "CodeMirror-hints";
+    var theme = completion.cm.options.theme;
+    hints.className = "CodeMirror-hints " + theme;
     this.selectedHint = data.selectedHint || 0;
 
     var completions = data.list;
@@ -40558,7 +40560,9 @@ module.exports = function pull (array, values) {
   // Need to iterate backwards.
   for (i = array.length; i--;) {
     value = array[i]
-    if (!hash.hasOwnProperty(value)) clone.push(value)
+    if (!hash.hasOwnProperty(value))
+      // Unshift because it is iterating backwards.
+      clone.unshift(value)
   }
 
   return clone
@@ -42500,8 +42504,8 @@ var Observable = exports.Observable = function () {
 
         return function () {
           if (subscription) {
-            subscription = undefined;
             subscription.unsubscribe();
+            subscription = undefined;
           }
         };
       });
@@ -65566,9 +65570,11 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                    currArg[argName] = typeIsList(argReturnType) ? [] : undefined;
 	                    if (_graphql.isInterfaceType(argReturnRootType) || _graphql.isUnionType(argReturnRootType)) {
 	                        for (const argKey in arg) {
-	                            const argTypeName = capFirst(pluralize.singular(argKey));
-	                            argReturnRootType = _info.schema.getType(argTypeName);
-	                            promises.push(mutateResolver(mutation, dataResolver)(currRecord, arg[argKey], _context, _info, index, argName, argReturnRootType));
+	                            const argTypeName = pluralize.singular(argKey).toLowerCase();
+	                            const matchingType = lodash.find(_info.schema.getTypeMap(), type => {
+	                                return type.name.toLowerCase() === argTypeName;
+	                            });
+	                            promises.push(mutateResolver(mutation, dataResolver)(currRecord, arg[argKey], _context, _info, index, argName, matchingType));
 	                        }
 	                    }
 	                    else {
@@ -66634,7 +66640,20 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	        const fieldTypeName = getReturnType(field.type);
 	        const schemaType = this.schema.getType(fieldTypeName);
 	        if (_graphql.isInputType(schemaType)) {
-	            inputType = schemaType;
+	            if (mutation === Mutation.Update && !this.isAutomaticField(field)) {
+	                const nullableType = _graphql.getNullableType(schemaType);
+	                const namedType = _graphql.getNamedType(schemaType);
+	                // tslint:disable-next-line:prefer-conditional-expression
+	                if (typeIsList(field.type) && (_graphql.isScalarType(namedType) || _graphql.isEnumType(namedType))) {
+	                    inputType = this.getScalarListInput(namedType);
+	                }
+	                else {
+	                    inputType = nullableType;
+	                }
+	            }
+	            else {
+	                inputType = schemaType;
+	            }
 	        }
 	        else {
 	            const isArray = typeIsList(field.type);
@@ -67100,7 +67119,15 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                    if (_graphql.isInputType(field.type)) {
 	                        const infoTypeField = infoTypeFields.find(infoTypeField => infoTypeField.name === field.name);
 	                        if (!this.isAutomaticField(infoTypeField)) {
-	                            inputType = _graphql.getNullableType(field.type);
+	                            const nullableType = _graphql.getNullableType(field.type);
+	                            const namedType = _graphql.getNamedType(field.type);
+	                            // tslint:disable-next-line:prefer-conditional-expression
+	                            if (_graphql.isListType(nullableType) && (_graphql.isScalarType(namedType) || _graphql.isEnumType(namedType))) {
+	                                inputType = this.getScalarListInput(namedType);
+	                            }
+	                            else {
+	                                inputType = nullableType;
+	                            }
 	                        }
 	                    }
 	                    else if (_graphql.isObjectType(field.type)) {
@@ -67146,6 +67173,20 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            fields['update'] = { type: new _graphql.GraphQLNonNull(this.generateUpdateWithoutInput(fieldType, relationFieldName)) };
 	            fields['create'] = { type: new _graphql.GraphQLNonNull(this.generateCreateWithoutInput(fieldType, relationFieldName)) };
 	            fields['where'] = { type: new _graphql.GraphQLNonNull(this.generateWhereUniqueInput(fieldType)) };
+	            this.currInputObjectTypes.set(name, new _graphql.GraphQLInputObjectType({
+	                name,
+	                fields
+	            }));
+	        }
+	        return this.currInputObjectTypes.get(name);
+	    }
+	    getScalarListInput(scalarType) {
+	        const name = scalarType.name + 'ScalarListInput';
+	        if (!this.currInputObjectTypes.has(name)) {
+	            const fields = {};
+	            fields['set'] = { type: new _graphql.GraphQLList(scalarType) };
+	            fields['push'] = { type: new _graphql.GraphQLList(scalarType) };
+	            fields['pull'] = { type: new _graphql.GraphQLList(scalarType) };
 	            this.currInputObjectTypes.set(name, new _graphql.GraphQLInputObjectType({
 	                name,
 	                fields
@@ -70277,7 +70318,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            const fortuneType = this.getFortuneTypeName(graphQLTypeName);
 	            let updates = records;
 	            if (!options || !options['fortuneFormatted']) {
-	                updates = lodash.isArray(records) ? records.map(value => this.generateUpdates(fortuneType, value, options)) : this.generateUpdates(fortuneType, records, options);
+	                updates = lodash.isArray(records) ? records.map(value => this.generateUpdates(value, options)) : this.generateUpdates(records, options);
 	            }
 	            let results = this.transaction ? yield this.transaction.update(fortuneType, updates, undefined, meta) : yield this.store.update(fortuneType, updates, undefined, meta);
 	            results = results.payload.records;
@@ -70290,43 +70331,39 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            }
 	            return true;
 	        });
-	        this.generateUpdates = (fortuneTypeName, record, options = {}) => {
+	        this.generateUpdates = (record, options = {}) => {
 	            const updates = { id: record['id'] };
 	            for (const argName in record) {
-	                const link = lodash.get(this.store, `recordTypes.${fortuneTypeName}.${argName}.link`);
-	                let arg = record[argName];
+	                const arg = record[argName];
 	                if (argName !== 'id') {
 	                    if (lodash.isArray(arg)) {
-	                        if (link && arg) {
-	                            arg = arg.map(currId => {
-	                                return currId;
-	                            });
-	                        }
 	                        if (options['pull']) {
-	                            if (!updates.pull) {
-	                                updates.pull = {};
-	                            }
+	                            updates.pull = updates.pull || {};
 	                            updates.pull[argName] = arg;
 	                        }
 	                        else {
-	                            if (!updates.push) {
-	                                updates.push = {};
-	                            }
+	                            updates.push = updates.push || {};
 	                            updates.push[argName] = arg;
 	                        }
 	                    }
+	                    else if (lodash.isPlainObject(arg)) {
+	                        if (arg.push) {
+	                            updates.push = updates.push || {};
+	                            updates.push[argName] = arg.push;
+	                        }
+	                        if (arg.pull) {
+	                            updates.pull = updates.pull || {};
+	                            updates.pull[argName] = arg.pull;
+	                        }
+	                        if (arg.set) {
+	                            updates.replace = updates.replace || {};
+	                            updates.replace[argName] = arg.set;
+	                        }
+	                    }
 	                    else {
-	                        if (link && arg) {
-	                            arg = arg;
-	                        }
-	                        if (!updates.replace) {
-	                            updates.replace = {};
-	                        }
+	                        updates.replace = updates.replace || {};
 	                        updates.replace[argName] = arg;
 	                    }
-	                }
-	                else {
-	                    arg = arg;
 	                }
 	            }
 	            return updates;
@@ -71352,7 +71389,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                });
 	                if (!lodash.isEmpty(update)) {
 	                    update['id'] = objectsMap.get(object.id)['id'];
-	                    update = this.graphQLFortune.generateUpdates(typeName, update);
+	                    update = this.graphQLFortune.generateUpdates(update);
 	                    if (!lodash.isEmpty(pull)) {
 	                        update['pull'] = pull;
 	                    }
