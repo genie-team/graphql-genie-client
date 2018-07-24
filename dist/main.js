@@ -65331,6 +65331,23 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	        return type.name;
 	    }
 	};
+	class FindByUniqueError extends Error {
+	    constructor(message, code, properties) {
+	        super(message);
+	        if (properties) {
+	            Object.keys(properties).forEach(key => {
+	                this[key] = properties[key];
+	            });
+	        }
+	        // if no name provided, use the default. defineProperty ensures that it stays non-enumerable
+	        if (!this.name) {
+	            Object.defineProperty(this, 'name', { value: 'ApolloError' });
+	        }
+	        // extensions are flattened to be included in the root of GraphQLError's, so
+	        // don't add properties to extensions
+	        this.extensions = { code };
+	    }
+	}
 
 	/*! *****************************************************************************
 	Copyright (c) Microsoft Corporation. All rights reserved.
@@ -65571,10 +65588,10 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                    if (_graphql.isInterfaceType(argReturnRootType) || _graphql.isUnionType(argReturnRootType)) {
 	                        for (const argKey in arg) {
 	                            const argTypeName = pluralize.singular(argKey).toLowerCase();
-	                            const matchingType = lodash.find(_info.schema.getTypeMap(), type => {
+	                            argReturnRootType = lodash.find(_info.schema.getTypeMap(), type => {
 	                                return type.name.toLowerCase() === argTypeName;
 	                            });
-	                            promises.push(mutateResolver(mutation, dataResolver)(currRecord, arg[argKey], _context, _info, index, argName, matchingType));
+	                            promises.push(mutateResolver(mutation, dataResolver)(currRecord, arg[argKey], _context, _info, index, argName, argReturnRootType));
 	                        }
 	                    }
 	                    else {
@@ -65628,7 +65645,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                    const returnTypeName = getReturnType(returnType);
 	                    currRecord = yield dataResolver.getValueByUnique(returnTypeName, whereArgs, { context: _context, info: _info });
 	                    if (!currRecord || lodash.isEmpty(currRecord)) {
-	                        throw new Error(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`);
+	                        throw new FindByUniqueError(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`, 'update', { arg: whereArgs, typename: returnTypeName });
 	                    }
 	                }
 	            }
@@ -65750,7 +65767,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                        resolve({ index, key, id: data['id'], data });
 	                    }
 	                    else {
-	                        reject(new Error('tried to connect using unique value that does not exist ' + JSON.stringify(connectArg)));
+	                        reject(new FindByUniqueError(`connect: ${returnTypeName} does not exist with where args ${JSON.stringify(connectArg)}`, 'disconnect', { arg: connectArg, typename: returnTypeName }));
 	                    }
 	                }).catch(reason => {
 	                    reject(reason);
@@ -65776,7 +65793,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                            resolve(data['id']);
 	                        }
 	                        else {
-	                            reject();
+	                            reject(new FindByUniqueError(`disconnect: ${returnTypeName} does not exist with where args ${JSON.stringify(disconnectArg)}`, 'disconnect', { arg: disconnectArg, typename: returnTypeName }));
 	                        }
 	                    }).catch(reason => {
 	                        reject(reason);
@@ -65811,7 +65828,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                    dataResolver.getValueByUnique(returnTypeName, whereArgs, { context: _context, info: _info }).then(whereData => {
 	                        currRecord = whereData;
 	                        if (!currRecord || lodash.isEmpty(currRecord)) {
-	                            throw new _graphql.GraphQLError(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`);
+	                            throw new FindByUniqueError(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`, 'delete', { arg: whereArgs, typename: returnTypeName });
 	                        }
 	                        dataResolver.delete(currRecord.__typename, [currRecord.id], { context: _context, info: _info }).then(() => {
 	                            resolve({ index, key, id: null, currRecord });
@@ -65825,12 +65842,13 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            }
 	            else {
 	                deletePromises.push(new Promise((resolve, reject) => {
-	                    dataResolver.getValueByUnique(dataResolver.getLink(currRecord.__typename, key), deleteArg, { context: _context, info: _info }).then(data => {
+	                    const deleteTypeName = dataResolver.getLink(currRecord.__typename, key);
+	                    dataResolver.getValueByUnique(deleteTypeName, deleteArg, { context: _context, info: _info }).then(data => {
 	                        if (data && data['id']) {
 	                            resolve(data['id']);
 	                        }
 	                        else {
-	                            reject();
+	                            reject(new FindByUniqueError(`${deleteTypeName} does not exist with where args ${JSON.stringify(deleteArg)}`, 'delete', { arg: deleteArg, typename: deleteTypeName }));
 	                        }
 	                    }).catch(reason => {
 	                        reject(reason);
@@ -67265,6 +67283,17 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                    let fortuneReturn = yield this.dataResolver.find(type.name, null, options, { context: _context, info: _info });
 	                    fortuneReturn = fortuneReturn.filter(element => element !== null && element !== undefined);
 	                    count = fortuneReturn.length;
+	                    if (count > 1) {
+	                        Object.keys(updateArgs).forEach(fieldName => {
+	                            const fields = lodash.get(this.schemaInfo, [type.name, 'fields']);
+	                            if (fields) {
+	                                const field = lodash.find(fields, { name: fieldName });
+	                                if (lodash.get(field, ['metadata', 'unique']) === true) {
+	                                    throw new _graphql.GraphQLError('Can\'t update multiple values on unique field ' + fieldName);
+	                                }
+	                            }
+	                        });
+	                    }
 	                    yield Promise.all(fortuneReturn.map((fortuneRecord) => __awaiter(this, void 0, void 0, function* () {
 	                        return yield updateResolver(this.dataResolver)(fortuneRecord, { update: updateArgs, where: true }, _context, _info, null, null, schemaType);
 	                    })));
@@ -71509,6 +71538,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	exports.Connection = Connection;
 	exports.typeIsList = typeIsList;
 	exports.getReturnType = getReturnType;
+	exports.FindByUniqueError = FindByUniqueError;
 	exports.filterNested = filterNested;
 	exports.parseFilter = parseFilter;
 	exports.getRecordFromResolverReturn = getRecordFromResolverReturn;
