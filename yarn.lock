@@ -120,8 +120,8 @@
   resolved "https://registry.yarnpkg.com/@types/markdown-it/-/markdown-it-0.0.4.tgz#c5f67365916044b342dae8d702724788ba0b5b74"
 
 "@types/node@*":
-  version "10.5.2"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.5.2.tgz#f19f05314d5421fe37e74153254201a7bf00a707"
+  version "10.5.3"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.5.3.tgz#5bcfaf088ad17894232012877669634c06b20cc5"
 
 "@types/react-dom@^16.0.5":
   version "16.0.6"
@@ -1469,8 +1469,8 @@ caniuse-api@^1.5.2:
     lodash.uniq "^4.5.0"
 
 caniuse-db@^1.0.30000529, caniuse-db@^1.0.30000634, caniuse-db@^1.0.30000639:
-  version "1.0.30000870"
-  resolved "https://registry.yarnpkg.com/caniuse-db/-/caniuse-db-1.0.30000870.tgz#f397cd64922c24f85d0ce7803c9bd5c5a1571b16"
+  version "1.0.30000871"
+  resolved "https://registry.yarnpkg.com/caniuse-db/-/caniuse-db-1.0.30000871.tgz#f1995c1fe31892649a7605957a80c92518423d4d"
 
 caniuse-lite@^1.0.30000844, caniuse-lite@^1.0.30000864:
   version "1.0.30000865"
@@ -3103,9 +3103,9 @@ graphql-genie-subscriptions@^1.0.2:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/graphql-genie-subscriptions/-/graphql-genie-subscriptions-1.0.5.tgz#8e73b243e47555e17d453d28f5dbd2dc64ad73ce"
 
-graphql-genie@>=0.2.0:
-  version "0.2.23"
-  resolved "https://registry.yarnpkg.com/graphql-genie/-/graphql-genie-0.2.23.tgz#4dd5d5fde4cdb0aeda0f6da091bfd4ddad60e1b5"
+graphql-genie@>=0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/graphql-genie/-/graphql-genie-0.3.0.tgz#7e7e965028d2897364b8b1d9a641f095624f3018"
   dependencies:
     abab "^2.0.0"
     graphql-iso-date "^3.5.0"
@@ -5605,8 +5605,8 @@ recast@^0.12.5:
     source-map "~0.6.1"
 
 recast@^0.15.0:
-  version "0.15.2"
-  resolved "https://registry.yarnpkg.com/recast/-/recast-0.15.2.tgz#bcaebf7cdb0728e38ec6d1438e7fb3594505cee3"
+  version "0.15.3"
+  resolved "https://registry.yarnpkg.com/recast/-/recast-0.15.3.tgz#5fc1fd1c8e2d4d027ee3977a176bbb8d1c83305e"
   dependencies:
     ast-types "0.11.5"
     esprima "~4.0.0"

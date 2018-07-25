@@ -71286,6 +71286,25 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	        this.printSchema = () => {
 	            return this.schemaBuilder.printSchemaWithDirectives();
 	        };
+	        this.mapIdsToCreatedIds = (currIDs, objectsMap) => {
+	            if (currIDs) {
+	                // tslint:disable-next-line:prefer-conditional-expression
+	                if (lodash.isArray(currIDs)) {
+	                    if (lodash.isPlainObject(currIDs[0])) {
+	                        currIDs = currIDs.map(element => element && element.id ? element.id : element);
+	                    }
+	                    currIDs = currIDs.map(currID => objectsMap.has(currID) && objectsMap.get(currID)['id'] ? objectsMap.get(currID)['id'] : currID);
+	                }
+	                else {
+	                    // handle in case it's the full object not just id
+	                    if (lodash.isPlainObject(currIDs) && currIDs.id) {
+	                        currIDs = currIDs.id;
+	                    }
+	                    currIDs = objectsMap.has(currIDs) && objectsMap.get(currIDs)['id'] ? objectsMap.get(currIDs)['id'] : currIDs;
+	                }
+	            }
+	            return currIDs;
+	        };
 	        this.importRawData = (data, merge = false, defaultTypename) => __awaiter(this, void 0, void 0, function* () {
 	            let index = 0;
 	            const createPromises = [];
@@ -71361,7 +71380,6 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                const fieldMap = schemaType.getFields();
 	                const objectFields = Object.keys(object);
 	                let update = {};
-	                const pull = {};
 	                objectFields.forEach(fieldName => {
 	                    const schemaField = fieldMap[fieldName];
 	                    if (schemaField) {
@@ -71371,45 +71389,54 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                            if (!lodash.isEmpty(currValue)) {
 	                                if (!_graphql.isScalarType(schemaFieldType)) {
 	                                    if (lodash.isArray(currValue)) {
-	                                        if (lodash.isObject(currValue[0])) {
-	                                            currValue = currValue.map(element => element.id);
-	                                        }
-	                                        const fieldPush = [];
-	                                        const fieldPull = [];
-	                                        const existingObj = objectsMap.get(object['id']);
-	                                        const existingObjField = existingObj ? existingObj[fieldName] : [];
-	                                        currValue.forEach(element => {
-	                                            if (!existingObjField.includes(element)) {
-	                                                fieldPush.push(element);
-	                                            }
-	                                        });
-	                                        existingObjField.forEach(element => {
-	                                            if (!currValue.includes(element)) {
-	                                                fieldPull.push(element);
-	                                            }
-	                                        });
-	                                        if (!lodash.isEmpty(fieldPush)) {
-	                                            update[fieldName] = fieldPush;
-	                                        }
-	                                        if (!lodash.isEmpty(fieldPull)) {
-	                                            pull[fieldName] = fieldPull;
-	                                        }
+	                                        // if it's an array then set
+	                                        // use new ids if found
+	                                        currValue = this.mapIdsToCreatedIds(currValue, objectsMap);
+	                                        update[fieldName] = { set: currValue };
 	                                    }
 	                                    else {
-	                                        if (lodash.isObject(currValue)) {
+	                                        // if not an array we need to handle scalars vs objects with push/pull/set
+	                                        // handle in case it's the full object not just id
+	                                        if (lodash.isPlainObject(currValue) && currValue.id) {
 	                                            currValue = currValue.id;
 	                                        }
-	                                        const existingObj = objectsMap.get(currValue);
+	                                        // if it's not an object than it's just an id so we should set it
 	                                        // tslint:disable-next-line:prefer-conditional-expression
-	                                        if (existingObj && currValue !== existingObj['id']) {
-	                                            update[fieldName] = existingObj['id'];
+	                                        if (!lodash.isPlainObject(currValue)) {
+	                                            // use the new object id
+	                                            update[fieldName] = this.mapIdsToCreatedIds(currValue, objectsMap);
 	                                        }
 	                                        else {
+	                                            // it's an object so it is push/pull/set
+	                                            if (currValue.push) {
+	                                                currValue.push = this.mapIdsToCreatedIds(currValue.push, objectsMap);
+	                                            }
+	                                            if (currValue.pull) {
+	                                                currValue.pull = this.mapIdsToCreatedIds(currValue.pull, objectsMap);
+	                                            }
+	                                            if (currValue.set) {
+	                                                currValue.set = this.mapIdsToCreatedIds(currValue.set, objectsMap);
+	                                            }
 	                                            update[fieldName] = currValue;
 	                                        }
 	                                    }
 	                                }
+	                                else if (!lodash.isPlainObject(currValue)) {
+	                                    currValue = this.mapIdsToCreatedIds(currValue, objectsMap);
+	                                    // not an object and a scalar but lets check if it's an array
+	                                    update[fieldName] = lodash.isArray(currValue) ? { set: currValue } : currValue;
+	                                }
 	                                else {
+	                                    // it's an object so it is push/pull/set
+	                                    if (currValue.push) {
+	                                        currValue.push = this.mapIdsToCreatedIds(currValue.push, objectsMap);
+	                                    }
+	                                    if (currValue.pull) {
+	                                        currValue.pull = this.mapIdsToCreatedIds(currValue.pull, objectsMap);
+	                                    }
+	                                    if (currValue.set) {
+	                                        currValue.set = this.mapIdsToCreatedIds(currValue.set, objectsMap);
+	                                    }
 	                                    update[fieldName] = currValue;
 	                                }
 	                            }
@@ -71419,9 +71446,6 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                if (!lodash.isEmpty(update)) {
 	                    update['id'] = objectsMap.get(object.id)['id'];
 	                    update = this.graphQLFortune.generateUpdates(update);
-	                    if (!lodash.isEmpty(pull)) {
-	                        update['pull'] = pull;
-	                    }
 	                    // console.log(typeName, update);
 	                    updatePromies.push(this.graphQLFortune.update(typeName, update, undefined, { fortuneFormatted: true }));
 	                }
