@@ -185,9 +185,12 @@ nav>.logo {
 	color: #1c5a15;
 }
 
-.about-markdown {
+.about {
 	padding: 15px;
 	background-color: #F6F7F8;
+}
+
+.about, .about-markdown {
 	height: 100%;
 	overflow: scroll;
 }

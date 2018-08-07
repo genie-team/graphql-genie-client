@@ -21,9 +21,11 @@ export class AboutComponent extends React.Component<any, AboutState> {
 	render(): React.ReactNode {
 		const { markdown } = this.state;
 		return (
-			<div
-				className="about-markdown"
-				dangerouslySetInnerHTML={{__html: markdown}}></div>
+			<div className="about">
+				<div
+					className="about-markdown"
+					dangerouslySetInnerHTML={{__html: markdown}}></div>
+			</div>
 		);
 	}
 }
