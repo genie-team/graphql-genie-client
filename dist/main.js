@@ -66370,7 +66370,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                    __typename: entry.__typename
 	                };
 	            });
-	            result = result.length === 0 ? null : returnArray ? result : result[0];
+	            result = !returnArray && result.length === 0 ? null : returnArray ? result : result[0];
 	            if (returnConnection) {
 	                result = {
 	                    edges: result,
@@ -66407,7 +66407,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            lodash.set(options, 'offset', _args.skip);
 	        }
 	        let connection;
-	        let result;
+	        let result = [];
 	        let fortuneReturn = yield dataResolver.find(type.name, null, options, { context: _context, info: _info });
 	        if (fortuneReturn && !lodash.isEmpty(fortuneReturn)) {
 	            fortuneReturn = lodash.isArray(fortuneReturn) ? fortuneReturn : [fortuneReturn];
@@ -66602,7 +66602,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	        };
 	        this.addTypeDefsToSchema = ($typeDefs = '') => {
 	            if ($typeDefs) {
-	                this.typeDefs += $typeDefs;
+	                this.typeDefs += (typeof $typeDefs === 'string' ? $typeDefs : _graphql.print($typeDefs));
 	            }
 	            if (this.typeDefs.includes('@model') && !this.typeDefs.includes('directive @model')) {
 	                this.typeDefs = '\ndirective @model on OBJECT' + this.typeDefs;
@@ -66821,7 +66821,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 			"""
 			id: ID! @unique
 		}
-		` + typeDefs;
+		` + (typeof typeDefs === 'string' ? typeDefs : _graphql.print(typeDefs));
 	        this.resolveFunctions = {
 	            JSON: GraphQLJSON,
 	            Date: dist_1,
@@ -67281,7 +67281,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            infoType.fields.forEach(field => {
 	                if (!this.isAutomaticField(field) && field.name !== relationFieldName) {
 	                    let inputType = this.generateInputTypeForFieldInfo(field, Mutation.Create);
-	                    if (field.type.kind === 'NON_NULL') {
+	                    if (field.type.kind === 'NON_NULL' && field.type.ofType.kind !== 'LIST') {
 	                        inputType = new _graphql.GraphQLNonNull(inputType);
 	                    }
 	                    lodash.merge(fields, this.generateFieldForInput(field.name, inputType, lodash.get(field, 'metadata.defaultValue')));
@@ -67355,10 +67355,11 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            lodash.each(this.type.getFields(), field => {
 	                if (field.name !== 'id') {
 	                    let inputType;
+	                    const fieldNullableType = _graphql.getNullableType(field.type);
 	                    if (_graphql.isInputType(field.type)) {
 	                        const infoTypeField = infoTypeFields.find(infoTypeField => infoTypeField.name === field.name);
 	                        if (!this.isAutomaticField(infoTypeField)) {
-	                            inputType = field.type;
+	                            inputType = _graphql.isListType(fieldNullableType) ? fieldNullableType : field.type;
 	                        }
 	                    }
 	                    else if (_graphql.isObjectType(field.type)) {
@@ -67367,7 +67368,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                    else {
 	                        inputType = this.generateInputTypeForFieldInfo(infoTypeFields.find(currField => currField.name === field.name), Mutation.Create);
 	                    }
-	                    if (inputType && _graphql.isNonNullType(field.type) && !_graphql.isNonNullType(inputType)) {
+	                    if (inputType && !_graphql.isListType(fieldNullableType) && _graphql.isNonNullType(field.type) && !_graphql.isNonNullType(inputType)) {
 	                        inputType = new _graphql.GraphQLNonNull(inputType);
 	                    }
 	                    if (inputType) {
@@ -71954,8 +71955,8 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 			}
 		}`);
 	            types = lodash.get(result, 'data.__schema.types');
-	            types = types.filter(type => type.kind === 'OBJECT' && this.schemaBuilder.isUserTypeByName(type.name)).map(type => type.name);
-	            return types;
+	            const typeNames = types.filter(type => type.kind === 'OBJECT' && this.schemaBuilder.isUserTypeByName(type.name)).map(type => type.name);
+	            return typeNames;
 	        });
 	        this.getRawData = (types = [], context) => __awaiter(this, void 0, void 0, function* () {
 	            const meta = context ? { context } : undefined;
