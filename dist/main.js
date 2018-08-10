@@ -42254,21 +42254,16 @@ var GenieEditor = /** @class */ (function (_super) {
         try {
             var genie_1 = new graphql_genie_1.GraphQLGenie({ typeDefs: value, fortuneOptions: fortuneOptions });
             var schemaPromise = new Promise(function (resolve, reject) {
-                genie_1.init().then(function () {
-                    var schema = genie_1.getSchema();
-                    if (_this.state.data === 'mock') {
-                        graphql_tools_1.addMockFunctionsToSchema({
-                            schema: schema,
-                            mocks: mocks,
-                            preserveResolvers: false
-                        });
-                    }
-                    console.log('created schema');
-                    resolve(genie_1);
-                }).catch(function (e) {
-                    _this.setState(function (prevState) { return (__assign({}, prevState, { error: e.message })); });
-                    reject(e);
-                });
+                var schema = genie_1.getSchema();
+                if (_this.state.data === 'mock') {
+                    graphql_tools_1.addMockFunctionsToSchema({
+                        schema: schema,
+                        mocks: mocks,
+                        preserveResolvers: false
+                    });
+                }
+                console.log('created schema');
+                resolve(genie_1);
             });
             return schemaPromise;
         }
@@ -71444,12 +71439,10 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	        this.schema = schema;
 	    }
 	    getSchemaInfo() {
-	        return __awaiter(this, void 0, void 0, function* () {
-	            if (!this.schemaInfo) {
-	                this.schemaInfo = yield this.buildSchemaInfo(this.schema);
-	            }
-	            return this.schemaInfo;
-	        });
+	        if (!this.schemaInfo) {
+	            this.schemaInfo = this.buildSchemaInfo(this.schema);
+	        }
+	        return this.schemaInfo;
 	    }
 	    addDirectiveFromAST(astDirective, schemaInfo, path) {
 	        const name = astDirective.name.value;
@@ -71462,48 +71455,42 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	        lodash.set(schemaInfo, path, directives);
 	    }
 	    buildSchemaInfo(schema) {
-	        return __awaiter(this, void 0, void 0, function* () {
-	            let originalSchemaInfo = yield _graphql.graphql(schema, _graphql.getIntrospectionQuery({ descriptions: true }));
-	            if (originalSchemaInfo.errors) {
-	                throw new _graphql.GraphQLError(originalSchemaInfo.errors[0].message);
-	            }
-	            originalSchemaInfo = originalSchemaInfo.data;
-	            let schemaInfo = originalSchemaInfo;
-	            schemaInfo = lodash.omitBy(schemaInfo.__schema.types, (value) => {
-	                return lodash.startsWith(value.name, '__') || lodash.includes(['Boolean', 'String', 'ID', 'Int', 'Float'], value.name);
-	            });
-	            schemaInfo = lodash.mapKeys(schemaInfo, (type) => type.name);
-	            lodash.each(lodash.keys(schemaInfo), (typeName) => {
-	                const type = schemaInfo[typeName];
-	                // directives on type
-	                lodash.each(lodash.get(schema.getType(typeName), 'astNode.directives'), (astDirective) => {
-	                    this.addDirectiveFromAST(astDirective, schemaInfo, `${typeName}.directives`);
-	                });
-	                // directives on fields
-	                lodash.each(lodash.get(schema.getType(typeName), 'astNode.fields'), (field) => {
-	                    const fieldName = field.name.value;
-	                    lodash.each(lodash.get(field, 'directives'), (astDirective) => {
-	                        const fieldIndex = lodash.findIndex(lodash.get(schemaInfo, `${typeName}.fields`), { 'name': fieldName });
-	                        this.addDirectiveFromAST(astDirective, schemaInfo, `${typeName}.fields[${fieldIndex}].directives`);
-	                    });
-	                });
-	                // metadata on type
-	                lodash.set(schemaInfo, `${typeName}.metadata`, lodash.omit(lodash.get(schema, `_typeMap.${typeName}`), ['astNode', 'name', 'description', 'extensionASTNodes', 'isTypeOf', '_fields', '_interfaces', '_typeConfig', 'getFields', 'getInterfaces', 'toString', 'inspect', 'toJSON', '_enumConfig', 'getValue', 'getValues', 'parseLiteral', 'parseValue', 'getValue', 'serialize', '_getNameLookup', '_getValueLookup', '_values', 'resolveType', 'getTypes', '_types']));
-	                // metadata of fields
-	                lodash.each(lodash.get(schema, `_typeMap.${typeName}._fields`), (field) => {
-	                    const fieldIndex = lodash.findIndex(lodash.get(schemaInfo, `${typeName}.fields`), { 'name': field.name });
-	                    lodash.set(schemaInfo, `${typeName}.fields[${fieldIndex}].metadata`, lodash.omit(field, ['type', 'description', 'args', 'deprecationReason', 'astNode', 'isDeprecated', 'name']));
-	                });
-	                // add unions to types
-	                if (type.kind === 'UNION') {
-	                    lodash.each(type.possibleTypes, possibleType => {
-	                        schemaInfo[possibleType.name].unions = schemaInfo[possibleType.name].unions ? schemaInfo[possibleType.name].unions : [];
-	                        schemaInfo[possibleType.name].unions = lodash.concat(schemaInfo[possibleType.name].unions, [{ kind: type.kind, name: type.name, ofType: type.ofType }]);
-	                    });
-	                }
-	            });
-	            return schemaInfo;
+	        const originalSchemaInfo = _graphql.introspectionFromSchema(schema, { descriptions: true });
+	        let schemaInfo = originalSchemaInfo;
+	        schemaInfo = lodash.omitBy(schemaInfo.__schema.types, (value) => {
+	            return lodash.startsWith(value.name, '__') || lodash.includes(['Boolean', 'String', 'ID', 'Int', 'Float'], value.name);
 	        });
+	        schemaInfo = lodash.mapKeys(schemaInfo, (type) => type.name);
+	        lodash.each(lodash.keys(schemaInfo), (typeName) => {
+	            const type = schemaInfo[typeName];
+	            // directives on type
+	            lodash.each(lodash.get(schema.getType(typeName), 'astNode.directives'), (astDirective) => {
+	                this.addDirectiveFromAST(astDirective, schemaInfo, `${typeName}.directives`);
+	            });
+	            // directives on fields
+	            lodash.each(lodash.get(schema.getType(typeName), 'astNode.fields'), (field) => {
+	                const fieldName = field.name.value;
+	                lodash.each(lodash.get(field, 'directives'), (astDirective) => {
+	                    const fieldIndex = lodash.findIndex(lodash.get(schemaInfo, `${typeName}.fields`), { 'name': fieldName });
+	                    this.addDirectiveFromAST(astDirective, schemaInfo, `${typeName}.fields[${fieldIndex}].directives`);
+	                });
+	            });
+	            // metadata on type
+	            lodash.set(schemaInfo, `${typeName}.metadata`, lodash.omit(lodash.get(schema, `_typeMap.${typeName}`), ['astNode', 'name', 'description', 'extensionASTNodes', 'isTypeOf', '_fields', '_interfaces', '_typeConfig', 'getFields', 'getInterfaces', 'toString', 'inspect', 'toJSON', '_enumConfig', 'getValue', 'getValues', 'parseLiteral', 'parseValue', 'getValue', 'serialize', '_getNameLookup', '_getValueLookup', '_values', 'resolveType', 'getTypes', '_types']));
+	            // metadata of fields
+	            lodash.each(lodash.get(schema, `_typeMap.${typeName}._fields`), (field) => {
+	                const fieldIndex = lodash.findIndex(lodash.get(schemaInfo, `${typeName}.fields`), { 'name': field.name });
+	                lodash.set(schemaInfo, `${typeName}.fields[${fieldIndex}].metadata`, lodash.omit(field, ['type', 'description', 'args', 'deprecationReason', 'astNode', 'isDeprecated', 'name']));
+	            });
+	            // add unions to types
+	            if (type.kind === 'UNION') {
+	                lodash.each(type.possibleTypes, possibleType => {
+	                    schemaInfo[possibleType.name].unions = schemaInfo[possibleType.name].unions ? schemaInfo[possibleType.name].unions : [];
+	                    schemaInfo[possibleType.name].unions = lodash.concat(schemaInfo[possibleType.name].unions, [{ kind: type.kind, name: type.name, ofType: type.ofType }]);
+	                });
+	            }
+	        });
+	        return schemaInfo;
 	    }
 	}
 
@@ -71643,26 +71630,23 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                }
 	            });
 	        };
-	        this.init = () => __awaiter(this, void 0, void 0, function* () {
+	        this.init = () => {
 	            this.generators = [];
 	            this.schemaInfoBuilder = new SchemaInfoBuilder(this.schema);
-	            this.schemaInfo = yield this.schemaInfoBuilder.getSchemaInfo();
+	            this.schemaInfo = this.schemaInfoBuilder.getSchemaInfo();
 	            this.relations = computeRelations(this.schemaInfo);
 	            this.graphQLFortune = new FortuneGraph(this.fortuneOptions, this.schemaInfo);
-	            yield this.buildQueries();
-	            yield this.buildResolvers();
-	            yield Promise.all(this.plugins.map((plugin) => __awaiter(this, void 0, void 0, function* () {
+	            this.buildQueries();
+	            this.buildResolvers();
+	            this.plugins.forEach(plugin => {
 	                const pluginResult = plugin(this);
-	                if (pluginResult.then) {
-	                    yield pluginResult;
+	                if (pluginResult && lodash.isFunction(pluginResult.then)) {
+	                    throw new Error('You must use call .useAsync for plugins that are asynchronous');
 	                }
-	            })));
-	            this.plugins = [];
+	            });
 	            this.schema = this.schemaBuilder.getSchema();
-	            this.ready = true;
-	            return this;
-	        });
-	        this.buildResolvers = () => __awaiter(this, void 0, void 0, function* () {
+	        };
+	        this.buildResolvers = () => {
 	            lodash.forOwn(this.schemaInfo, (type, name) => {
 	                const fieldResolvers = new Map();
 	                const schemaType = this.schema.getType(type.name);
@@ -71676,16 +71660,9 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                    this.schema = this.schemaBuilder.setResolvers(name, fieldResolvers);
 	                }
 	            });
-	        });
-	        this.buildQueries = () => __awaiter(this, void 0, void 0, function* () {
-	            const nodesResult = yield _graphql.graphql(this.schema, `{
-			__type(name: "Node") {
-				possibleTypes {
-					name
-				}
-			}
-		}`);
-	            const nodeNames = nodesResult.data.__type.possibleTypes;
+	        };
+	        this.buildQueries = () => {
+	            const nodeNames = this.getModelTypes();
 	            const nodeTypes = [];
 	            nodeNames.forEach(result => {
 	                nodeTypes.push(this.schemaInfo[result.name]);
@@ -71750,18 +71727,22 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                this.schemaBuilder.setResolvers(name, resolverMap);
 	            });
 	            this.schema = this.schemaBuilder.getSchema();
-	        });
-	        this.use = (plugin) => __awaiter(this, void 0, void 0, function* () {
-	            if (!this.ready) {
-	                this.plugins.push(plugin);
+	        };
+	        this.use = (plugin) => {
+	            const pluginResult = plugin(this);
+	            if (pluginResult && lodash.isFunction(pluginResult.then)) {
+	                throw new Error('You must use call .useAsync for plugins that are asynchronous');
 	            }
-	            else {
-	                const pluginResult = plugin(this);
-	                if (pluginResult.then) {
-	                    yield pluginResult;
-	                }
-	                this.schema = this.schemaBuilder.getSchema();
+	            this.schema = this.schemaBuilder.getSchema();
+	            return this;
+	        };
+	        this.useAsync = (plugin) => __awaiter(this, void 0, void 0, function* () {
+	            const pluginResult = plugin(this);
+	            if (pluginResult && lodash.isFunction(pluginResult.then)) {
+	                yield pluginResult;
 	            }
+	            this.schema = this.schemaBuilder.getSchema();
+	            return this;
 	        });
 	        this.getSchema = () => {
 	            return this.schemaBuilder.getSchema();
@@ -71944,25 +71925,20 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            yield Promise.all(updatePromies);
 	            return true;
 	        });
-	        this.getUserTypes = () => __awaiter(this, void 0, void 0, function* () {
-	            let types = [];
-	            const result = yield _graphql.graphql(this.schema, `{
-			__schema {
-				types {
-					name
-					kind
-				}
-			}
-		}`);
-	            types = lodash.get(result, 'data.__schema.types');
+	        this.getUserTypes = () => {
+	            const introspection = _graphql.introspectionFromSchema(this.schema, { descriptions: false });
+	            const types = introspection.__schema.types;
 	            const typeNames = types.filter(type => type.kind === 'OBJECT' && this.schemaBuilder.isUserTypeByName(type.name)).map(type => type.name);
 	            return typeNames;
-	        });
+	        };
+	        this.getModelTypes = () => {
+	            return _graphql.introspectionFromSchema(this.schema, { descriptions: false }).__schema.types.find(t => t.name === 'Node')['possibleTypes'];
+	        };
 	        this.getRawData = (types = [], context) => __awaiter(this, void 0, void 0, function* () {
 	            const meta = context ? { context } : undefined;
 	            let nodes = [];
 	            if (lodash.isEmpty(types)) {
-	                types = yield this.getUserTypes();
+	                types = this.getUserTypes();
 	            }
 	            if (types) {
 	                const promises = [];
@@ -71974,27 +71950,18 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            }
 	            return nodes;
 	        });
-	        this.getFragmentTypes = () => __awaiter(this, void 0, void 0, function* () {
-	            const result = yield _graphql.graphql(this.schema, `{
-			__schema {
-				types {
-					kind
-					name
-					possibleTypes {
-						name
-					}
-				}
-			}
-		}`);
+	        this.getFragmentTypes = () => {
+	            const introspection = _graphql.introspectionFromSchema(this.schema, { descriptions: false });
+	            const types = introspection.__schema.types;
 	            // here we're filtering out any type information unrelated to unions or interfaces
-	            const types = lodash.get(result, 'data.__schema.types');
 	            if (types) {
-	                const filteredData = result.data.__schema.types.filter(type => type.possibleTypes !== null);
-	                result.data.__schema.types = filteredData;
+	                const filteredData = types.filter(type => {
+	                    return type['possibleTypes'] !== null;
+	                });
+	                lodash.set(introspection, '__schema.types', filteredData);
 	            }
-	            return result.data;
-	        });
-	        this.ready = false;
+	            return introspection;
+	        };
 	        this.fortuneOptions = options.fortuneOptions ? options.fortuneOptions : {};
 	        this.fortuneOptions.settings = this.fortuneOptions.settings ? this.fortuneOptions.settings : {};
 	        if (!this.fortuneOptions.settings.hasOwnProperty('enforceLinks')) {
@@ -72012,50 +71979,12 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	        else {
 	            throw new Error('Need a schemaBuilder or typeDefs');
 	        }
-	        this.plugins = [];
+	        this.plugins = lodash.isArray(options.plugins) ? options.plugins : options.plugins ? [options.plugins] : [];
 	        this.schema = this.schemaBuilder.getSchema();
 	        this.validate();
+	        this.init();
 	    }
 	}
-	// cache.writeData({ data });
-	// cache.writeData({
-	// 	id: 'ROOT_QUERY.objects.1',
-	// 	data: {
-	// 		field: 'hi'
-	// 	}
-	// });
-	// window['gql'] = gql;
-	// window['cache'] = cache;
-	// console.info(cache.readQuery({
-	// 	query: gql`
-	//   query {
-	//     objects {
-	//       name
-	//     }
-	//   }
-	// `}));
-	// mutation {
-	//   createGraphQLField(name: "test new field", type:{list:true, type:""}) {
-	//     id
-	//     name
-	//     description
-	//   }
-	// }
-	// {
-	//   allGraphQLDirectives {
-	//     id
-	//     name
-	//     description
-	//     args {
-	//       id
-	//       type {
-	//         ... on GraphQLScalarType {
-	//           id
-	//         }
-	//       }
-	//     }
-	//   }
-	// }
 
 	exports.GraphQLSchemaBuilder = GraphQLSchemaBuilder;
 	exports.Connection = Connection;

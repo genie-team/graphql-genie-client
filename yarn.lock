@@ -3121,13 +3121,13 @@ graphql-config@2.0.1:
     lodash "^4.17.4"
     minimatch "^3.0.4"
 
-graphql-genie-subscriptions@^1.0.2:
-  version "1.0.6"
-  resolved "https://registry.yarnpkg.com/graphql-genie-subscriptions/-/graphql-genie-subscriptions-1.0.6.tgz#be0522f4ec826ff8f93faf0c013825b701869cc1"
+graphql-genie-subscriptions@^1.0.8:
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/graphql-genie-subscriptions/-/graphql-genie-subscriptions-1.0.8.tgz#e5fa3124a23a1032b34e8075e550d4be840a320d"
 
-graphql-genie@>=0.3.0:
-  version "0.3.7"
-  resolved "https://registry.yarnpkg.com/graphql-genie/-/graphql-genie-0.3.7.tgz#bcecbc18f7bdf28cbaeede55be746e7bcbc54aa3"
+graphql-genie@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/graphql-genie/-/graphql-genie-0.4.0.tgz#fa9e25be4f349d1b953f9da9e3f5613d4953f398"
   dependencies:
     abab "^2.0.0"
     graphql-iso-date "^3.5.0"
