@@ -65834,7 +65834,11 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	        this.relations.set(name, newRelation);
 	    }
 	    throwError(name, type, primaryField, relatedField) {
-	        console.error('Bad schema, relation could apply to multiple fields\n', 'relation name', name, '\n', 'fortune name', type, '\n', 'curr field', primaryField, '\n', 'other field', relatedField);
+	        throw new Error(`Bad schema, relation could apply to multiple fields
+			relation name: ${name}
+			fortune name: ${type}
+			curr field: ${primaryField}
+			other field: ${relatedField}`);
 	    }
 	}
 	const computeNumFieldsOfType = (type, checkFieldTypeName) => {
@@ -66641,7 +66645,8 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                    default: DefaultDirective,
 	                    unique: UniqueDirective,
 	                    createdTimestamp: CreatedTimestampDirective,
-	                    updatedTimestamp: UpdatedTimestampDirective
+	                    updatedTimestamp: UpdatedTimestampDirective,
+	                    storeName: StoreNameDirective
 	                },
 	                resolverValidationOptions: {
 	                    requireResolversForResolveType: false
@@ -66804,9 +66809,15 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 			value: String!
 		) on FIELD_DEFINITION
 
+		directive @storeName(
+			value: String!
+		) on OBJECT | INTERFACE | UNION
+
 		directive @unique on FIELD_DEFINITION
 
 		directive @updatedTimestamp on FIELD_DEFINITION
+
+		directive @createdTimestamp on FIELD_DEFINITION
 
 		directive @createdTimestamp on FIELD_DEFINITION
 
@@ -66824,7 +66835,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            JSON: GraphQLJSON,
 	            Date: dist_1,
 	            Time: dist_2,
-	            DateTime: dist_3
+	            DateTime: dist_3,
 	        };
 	        this.config = $config;
 	    }
@@ -66909,6 +66920,20 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	        }
 	        object._interfaces.push(this.schema.getTypeMap().Node);
 	        lodash.has(this.schema, '_implementations.Node') ? this.schema['_implementations'].Node.push(object) : lodash.set(this.schema, '_implementations.Node', [object]);
+	    }
+	}
+	class StoreNameDirective extends graphqlTools.SchemaDirectiveVisitor {
+	    visitObject(object) {
+	        this.setStoreName(object);
+	    }
+	    visitUnion(union) {
+	        this.setStoreName(union);
+	    }
+	    visitInterface(iface) {
+	        this.setStoreName(iface);
+	    }
+	    setStoreName(type) {
+	        type.storeName = this.args.value;
 	    }
 	}
 	class UniqueDirective extends graphqlTools.SchemaDirectiveVisitor {
@@ -70782,6 +70807,9 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            lodash.each(lodash.keys(this.schemaInfo), (typeName) => {
 	                if (typeName !== 'Node' && !this.fortuneTypeNames.has(typeName)) {
 	                    const type = this.schemaInfo[typeName];
+	                    let storeObj = this.getStoreName(type, null, null);
+	                    let storeName = storeObj.storeName;
+	                    let storeTypeName = storeObj.typeName;
 	                    if (!lodash.isEmpty(type.possibleTypes)) {
 	                        const possibleTypes = [type.name];
 	                        lodash.each(type.possibleTypes, possibleType => {
@@ -70789,15 +70817,25 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                                possibleTypes.push(possibleType.name);
 	                            }
 	                            possibleType = this.schemaInfo[possibleType.name];
+	                            storeObj = this.getStoreName(possibleType, storeName, storeTypeName);
+	                            storeName = storeObj.storeName;
+	                            storeTypeName = storeObj.typeName;
 	                            lodash.each(possibleType['interfaces'], currInterface => {
 	                                currInterface = this.schemaInfo[currInterface.name];
-	                                if (currInterface.name !== 'Node' && currInterface.name !== typeName) {
+	                                if (currInterface.name !== 'Node' && currInterface.name !== storeTypeName) {
+	                                    storeObj = this.getStoreName(currInterface, storeName, storeTypeName);
+	                                    storeName = storeObj.storeName;
+	                                    storeTypeName = storeObj.typeName;
 	                                    if (possibleTypes.indexOf(currInterface.name) < 0) {
 	                                        possibleTypes.push(currInterface.name);
 	                                    }
 	                                    if (!lodash.isEmpty(currInterface.possibleTypes)) {
 	                                        lodash.each(currInterface.possibleTypes, currInterfacePossibleType => {
 	                                            if (possibleTypes.indexOf(currInterfacePossibleType.name) < 0) {
+	                                                currInterfacePossibleType = this.schemaInfo[currInterfacePossibleType.name];
+	                                                storeObj = this.getStoreName(currInterfacePossibleType, storeName, storeTypeName);
+	                                                storeName = storeObj.storeName;
+	                                                storeTypeName = storeObj.typeName;
 	                                                possibleTypes.push(currInterfacePossibleType.name);
 	                                            }
 	                                        });
@@ -70806,13 +70844,20 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                            });
 	                            lodash.each(possibleType['unions'], currUnion => {
 	                                currUnion = this.schemaInfo[currUnion.name];
-	                                if (currUnion.name !== typeName) {
+	                                if (currUnion.name !== storeTypeName) {
 	                                    if (possibleTypes.indexOf(currUnion.name) < 0) {
+	                                        storeObj = this.getStoreName(currUnion, storeName, storeTypeName);
+	                                        storeName = storeObj.storeName;
+	                                        storeTypeName = storeObj.typeName;
 	                                        possibleTypes.push(currUnion.name);
 	                                    }
 	                                    if (!lodash.isEmpty(currUnion.possibleTypes)) {
 	                                        lodash.each(currUnion.possibleTypes, currUnionPossibleType => {
 	                                            if (possibleTypes.indexOf(currUnionPossibleType.name) < 0) {
+	                                                currUnionPossibleType = this.schemaInfo[currUnionPossibleType.name];
+	                                                storeObj = this.getStoreName(currUnionPossibleType, storeName, storeTypeName);
+	                                                storeName = storeObj.storeName;
+	                                                storeTypeName = storeObj.typeName;
 	                                                possibleTypes.push(currUnionPossibleType.name);
 	                                            }
 	                                        });
@@ -70820,15 +70865,34 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                                }
 	                            });
 	                        });
-	                        possibleTypes.sort();
-	                        const fortuneTypeName = possibleTypes.join('_');
+	                        const fortuneTypeName = storeName || (possibleTypes.sort() && possibleTypes.join('_'));
 	                        lodash.each(possibleTypes, currTypeName => {
 	                            this.fortuneTypeNames.set(currTypeName, fortuneTypeName);
 	                        });
 	                    }
+	                    else if (!lodash.isEmpty(storeName)) {
+	                        this.fortuneTypeNames.set(typeName, storeName);
+	                    }
 	                }
 	            });
 	            return this.fortuneTypeNames;
+	        };
+	        this.getStoreName = (type, currStoreName, currTypeName) => {
+	            let storeName = lodash.get(type, 'metadata.storeName', null);
+	            let typeName = type.name;
+	            if (!lodash.isEmpty(storeName) && currStoreName && currStoreName !== storeName) {
+	                throw new Error(`Conflictiing store names which need to be the same
+			${storeName} on ${typeName}
+			does not match
+			${currStoreName} on ${currTypeName}
+		`);
+	            }
+	            typeName = !lodash.isEmpty(storeName) ? typeName : currTypeName;
+	            storeName = !lodash.isEmpty(storeName) ? storeName : currStoreName;
+	            return {
+	                storeName,
+	                typeName
+	            };
 	        };
 	        this.getFortuneTypeName = (name) => {
 	            name = this.getDataTypeName(name);
