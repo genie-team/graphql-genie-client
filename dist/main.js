@@ -65758,11 +65758,14 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            return true;
 	        }
 	        else {
-	            return this.isSameRelative(relation);
+	            return this.isSameRelation(relation) || this.isCurrentRelation(relation);
 	        }
 	    }
-	    isSameRelative(relation) {
+	    isSameRelation(relation) {
 	        return this.type0 === relation.type0 && this.field0 === relation.field0 && this.field0isList === relation.field0isList;
+	    }
+	    isCurrentRelation(relation) {
+	        return this.type1 === relation.type0 && this.field1 === relation.field0 && this.field1isList === relation.field0isList;
 	    }
 	    getInverse(type, field) {
 	        const inverse = this.getInverseTuple(type, field);
@@ -65816,7 +65819,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	        else {
 	            const relation = this.relations.get(name);
 	            if (relation.isValidRelative(newRelation)) {
-	                if (!relation.isSameRelative(newRelation)) {
+	                if (!relation.isSameRelation(newRelation)) {
 	                    relation.setRelative(newRelation);
 	                }
 	            }
@@ -66883,7 +66886,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            const currType = type.name;
 	            let value = this.args.value;
 	            if (currType === 'Int') {
-	                value = Number.parseInt(value);
+	                value = Number.parseInt(value, 10);
 	            }
 	            else if (currType === 'Float') {
 	                value = Number.parseFloat(value);
