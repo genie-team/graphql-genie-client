@@ -17,7 +17,7 @@
     "apollo-link-schema": "^1.1.0",
     "classnames": "^2.2.5",
     "fortune": "^5.4.2",
-    "fortune-indexeddb": "^1.0.1",
+    "fortune-localforage": "^1.1.0",
     "graphiql": "^0.11.11",
     "graphql": "^14.0.0-rc.1",
     "graphql-genie": "^0.4.0",

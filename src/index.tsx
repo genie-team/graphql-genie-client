@@ -1,7 +1,7 @@
 import { ApolloLink, execute } from 'apollo-link';
 import { SchemaLink } from 'apollo-link-schema';
 import * as classNames from 'classnames';
-import * as indexedDBAdapter from 'fortune-indexeddb';
+import * as localForageAdapter from 'fortune-localforage';
 import * as GraphiQL from 'graphiql';
 import 'graphiql/graphiql.css';
 import { parse } from 'graphql';
@@ -87,8 +87,7 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 			settings: { enforceLinks: true }
 		};
 		if (this.state.data === 'db') {
-			fortuneOptions.adapter = [ indexedDBAdapter, {
-				// Name of the IndexedDB database to use. Defaults to `fortune`.
+			fortuneOptions.adapter = [ localForageAdapter, {
 				name: 'fortune'
 			} ];
 		}
