@@ -2,9 +2,20 @@
 
 # GraphQL Genie Client
 
+- [GraphQL Genie Client](#graphql-genie-client)
+	- [Settings](#settings)
+			- [Data Mode](#data-mode)
+	- [Roadmap](#roadmap)
+	- [Contribute or Donate](#contribute-or-donate)
+	- [Backers](#backers)
+	- [Thanks/Credit](#thankscredit)
 
 [![Dependency Status](https://david-dm.org/genie-team/graphql-genie-client.svg)](https://david-dm.org/genie-team/graphql-genie-client)
 [![devDependency Status](https://david-dm.org/genie-team/graphql-genie-client/dev-status.svg)](https://david-dm.org/genie-team/graphql-genie-client/?type=dev)
+
+[![donate](http://img.shields.io/liberapay/receives/aCoreyJ.svg?logo=liberapay)](https://liberapay.com/aCoreyJ/donate) 
+[![patreon](https://img.shields.io/badge/patreon-donate-orange.svg)](https://www.patreon.com/acoreyj/overview) 
+[![paypal](https://img.shields.io/badge/paypal-donate-blue.svg)](https://www.paypal.com/pools/c/872dOkFVLP) 	
 
 **View in github pages** [here](https://github.com/genie-team/graphql-genie-client).
 
@@ -33,13 +44,25 @@ Data can be mocked, stored in memory or stored in your browsers IndexedDB (so re
 
 Ability to export data
 
-## Development
+## Contribute or Donate
+* Code Contributions
+	* Fork
+	* Make Changes
+	* Run the following and make sure no failures or errors
+		* npm run build
+		* npm run start
+	* Open pull request
+* Donate 
+	* Genie and other genie-team products are outcomes of a hobby and receive no other funding, any and all support would be greatly appreciated if you find Genie products useful. Your support will result in faster development of bug fixes, new features and new products.
+	* [![donate](http://img.shields.io/liberapay/receives/aCoreyJ.svg?logo=liberapay)](https://liberapay.com/aCoreyJ/donate) (preferred)
+	* [![patreon](https://img.shields.io/badge/patreon-donate-orange.svg)](https://www.patreon.com/acoreyj/overview) 
+	* [![paypal](https://img.shields.io/badge/paypal-donate-blue.svg)](https://www.paypal.com/pools/c/872dOkFVLP)
 
-```sh
-npm install
-npm run build
-npm run start
-```
+## Backers
+
+[Your Name and link Here]
+
+If you contribute and want a thanks callout on genie project READMEs let me know via [twitter message](https://twitter.com/aCoreyJ) (at least .25/week)
 
 ## Thanks/Credit
 

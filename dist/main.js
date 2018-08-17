@@ -18278,13 +18278,16 @@ var fast_json_stable_stringify = __webpack_require__(220);
 var fast_json_stable_stringify_default = /*#__PURE__*/__webpack_require__.n(fast_json_stable_stringify);
 
 // CONCATENATED MODULE: ./node_modules/apollo-utilities/lib/storeUtils.js
-var __assign = (undefined && undefined.__assign) || Object.assign || function(t) {
-    for (var s, i = 1, n = arguments.length; i < n; i++) {
-        s = arguments[i];
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-            t[p] = s[p];
-    }
-    return t;
+var __assign = (undefined && undefined.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
 };
 
 function isScalarValue(value) {
@@ -42332,6 +42335,9 @@ var GenieEditor = /** @class */ (function (_super) {
         var dirtySchema = dirtyGenie ? dirtyGenie.getSchema() : null;
         var schema = genie ? genie.getSchema() : null;
         return (React.createElement("div", { className: "genie-editor-container" },
+            React.createElement("div", { className: "donate" },
+                React.createElement("a", { href: "https://liberapay.com/aCoreyJ/donate" },
+                    React.createElement("img", { alt: "Donate using Liberapay", src: "https://liberapay.com/assets/widgets/donate.svg" }))),
             (activeTab === 0 || activeTab === 2) &&
                 React.createElement("style", { dangerouslySetInnerHTML: {
                         __html: "\n\t\t\t\t\t\t\t\t.CodeMirror-lint-tooltip { display: none!important; }\n\t\t\t\t\t\t\t\t.CodeMirror-hints { display: none!important; }\n\t\t\t\t\t\t\t"
@@ -66005,6 +66011,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	        let disconnectArgs = _args.disconnect ? _args.disconnect : [];
 	        disconnectArgs = disconnectArgs && !lodash.isArray(disconnectArgs) ? [disconnectArgs] : disconnectArgs;
 	        const whereArgs = _args.where ? _args.where : _args.input && _args.input.where ? _args.input.where : null;
+	        const conditionsArgs = _args.conditions ? _args.conditions : _args.input && _args.input.conditions ? _args.input.conditions : null;
 	        // lets make sure we are able to add this (prevent duplicates on unique fields, etc)
 	        const canAddResults = yield Promise.all([dataResolver.canAdd(returnTypeName, createArgs, { context: _context, info: _info }),
 	            dataResolver.canAdd(returnTypeName, updateArgs, { context: _context, info: _info })]);
@@ -66070,7 +66077,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                let newArgs = { create: currArg.create };
 	                if (upsertRecord && !lodash.isEmpty(upsertRecord)) {
 	                    // pass true to where args if currRecord will already be the one we want
-	                    newArgs = { where: true, update: currArg.update };
+	                    newArgs = { where: true, update: currArg.update, conditions: conditionsArgs };
 	                }
 	                dataResolverPromises.push(new Promise((resolve, reject) => {
 	                    mutateResolver(mutation, dataResolver)(upsertRecord, newArgs, _context, _info, index, key, returnType).then((result) => {
@@ -66107,6 +66114,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	        });
 	        // now updates
 	        updateArgs.forEach((updateArg) => {
+	            // make sure it is prototype correctly to prevent error
 	            updateArg = updateArg.hasOwnProperty ? updateArg : Object.assign({}, updateArg);
 	            // only do updates on new values
 	            for (const updateArgKey in updateArg) {
@@ -66116,6 +66124,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                    delete currRecord[updateArgKey];
 	                }
 	                else if (lodash.isArray(currArg) && lodash.isArray(currRecordArg)) {
+	                    // for relations we can't have duplicates, only relations will be arrays
 	                    updateArg[updateArgKey] = lodash.difference(currArg, currRecordArg);
 	                }
 	            }
@@ -66123,9 +66132,19 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            if (cleanArg && !lodash.isEmpty(cleanArg)) {
 	                dataResolverPromises.push(new Promise((resolve, reject) => {
 	                    cleanArg.id = currRecord.id;
-	                    dataResolver.update(returnTypeName, cleanArg, { context: _context, info: _info }).then(data => {
-	                        const id = lodash.isArray(data) ? lodash.map(data, 'id') : data.id;
-	                        resolve({ index, key, id, data });
+	                    const meta = { context: _context, info: _info };
+	                    meetsConditions(conditionsArgs, returnTypeName, returnType, currRecord, dataResolver, _context, _info).then(meetsConditionsResult => {
+	                        if (!meetsConditionsResult) {
+	                            resolve({ index, key, id: [], unalteredData: currRecord });
+	                        }
+	                        else {
+	                            dataResolver.update(returnTypeName, cleanArg, meta).then(data => {
+	                                const id = lodash.isArray(data) ? lodash.map(data, 'id') : data.id;
+	                                resolve({ index, key, id, data });
+	                            }).catch(reason => {
+	                                reject(reason);
+	                            });
+	                        }
 	                    }).catch(reason => {
 	                        reject(reason);
 	                    });
@@ -66191,6 +66210,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	        const deletePromises = [];
 	        deleteArgs.forEach(deleteArg => {
 	            if (deleteArg === true) {
+	                // nested singular delete
 	                dataResolverPromises.push(new Promise((resolve, reject) => {
 	                    dataResolver.delete(dataResolver.getLink(currRecord.__typename, key), [currRecord[key]], { context: _context, info: _info }).then(data => {
 	                        resolve({ index, key, id: null, data });
@@ -66200,14 +66220,24 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                }));
 	            }
 	            else if (whereArgs && !currRecord) {
+	                // delete resolver
 	                dataResolverPromises.push(new Promise((resolve, reject) => {
 	                    dataResolver.getValueByUnique(returnTypeName, whereArgs, { context: _context, info: _info }).then(whereData => {
 	                        currRecord = whereData;
 	                        if (!currRecord || lodash.isEmpty(currRecord)) {
 	                            throw new FindByUniqueError(`${returnTypeName} does not exist with where args ${JSON.stringify(whereArgs)}`, 'delete', { arg: whereArgs, typename: returnTypeName });
 	                        }
-	                        dataResolver.delete(currRecord.__typename, [currRecord.id], { context: _context, info: _info }).then(() => {
-	                            resolve({ index, key, id: null, currRecord });
+	                        meetsConditions(conditionsArgs, returnTypeName, returnType, currRecord, dataResolver, _context, _info).then(meetsConditionsResult => {
+	                            if (!meetsConditionsResult) {
+	                                resolve({ index, key, id: [], unalteredData: currRecord });
+	                            }
+	                            else {
+	                                dataResolver.delete(currRecord.__typename, [currRecord.id], { context: _context, info: _info }).then(() => {
+	                                    resolve({ index, key, id: null, data: currRecord });
+	                                }).catch(reason => {
+	                                    reject(reason);
+	                                });
+	                            }
 	                        }).catch(reason => {
 	                            reject(reason);
 	                        });
@@ -66217,6 +66247,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                }));
 	            }
 	            else {
+	                // nested delete on list
 	                deletePromises.push(new Promise((resolve, reject) => {
 	                    const deleteTypeName = dataResolver.getLink(currRecord.__typename, key);
 	                    dataResolver.getValueByUnique(deleteTypeName, deleteArg, { context: _context, info: _info }).then(data => {
@@ -66250,16 +66281,18 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	        else {
 	            yield dataResolver.endTransaction();
 	            let data = lodash.get(dataResult, '[0].data');
-	            if (!data && mutation === Mutation.Delete) {
+	            const unalteredData = lodash.get(dataResult, '[0].unalteredData', null);
+	            if (!unalteredData && !data && mutation === Mutation.Delete) {
 	                data = currRecord;
 	            }
-	            else if (!data) {
+	            else if (!unalteredData && !data) {
 	                // if everything was already done on the object (updates, deletions and disconnects) it should be the currRecord but with changes
 	                data = currRecord;
 	            }
 	            return {
 	                data,
-	                clientMutationId
+	                clientMutationId,
+	                unalteredData
 	            };
 	        }
 	    });
@@ -66376,8 +66409,8 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            if (returnConnection) {
 	                result = {
 	                    edges: result,
-	                    pageInfo: connection.pageInfo,
-	                    aggregate: connection.aggregate
+	                    pageInfo: connection && connection.pageInfo ? connection.pageInfo : null,
+	                    aggregate: connection && connection.aggregate ? connection.aggregate : null
 	                };
 	            }
 	            return result;
@@ -66440,8 +66473,8 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	        if (returnConnection) {
 	            result = {
 	                edges: result,
-	                pageInfo: connection.pageInfo,
-	                aggregate: connection.aggregate
+	                pageInfo: connection && connection.pageInfo ? connection.pageInfo : null,
+	                aggregate: connection && connection.aggregate ? connection.aggregate : null
 	            };
 	        }
 	        return result;
@@ -66504,6 +66537,9 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	const filterNested = (filter, orderBy, type, fortuneReturn, cache, dataResolver, _context, _info) => __awaiter(undefined, void 0, void 0, function* () {
 	    // if they have nested filters on types we need to get that data now so we can filter at this root query
 	    const pullIds = new Set();
+	    if (!cache) {
+	        cache = new Map();
+	    }
 	    if ((orderBy || filter) && (_graphql.isObjectType(type) || _graphql.isInterfaceType(type))) {
 	        yield Promise.all(lodash.map(type.getFields(), (field) => __awaiter(this, void 0, void 0, function* () {
 	            const currFilter = filter && filter[field.name] ? filter[field.name] : filter && filter[`f_${field.name}`] ? filter[`f_${field.name}`] : null;
@@ -66565,8 +66601,10 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	const getPayloadTypeDef = (typeName) => {
 	    return `
 		type ${getPayloadTypeName(typeName)} {
-			data: ${typeName}!
+			data: ${typeName}
 			clientMutationId: String
+			#In the case of a update or delete and you had conditions, if the conditions did not match the existing object will be returned here. data will be null
+			unalteredData: ${typeName}
 		}`;
 	};
 	const capFirst = (val) => {
@@ -66581,6 +66619,23 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	    record = record && record.data ? record.data : record;
 	    return record;
 	};
+	const meetsConditions = (conditionsArgs, returnTypeName, returnType, currRecord, dataResolver, _context, _info) => __awaiter(undefined, void 0, void 0, function* () {
+	    let meetsConditions = true;
+	    if (conditionsArgs) {
+	        const conditionsOptions = parseFilter(conditionsArgs, returnType);
+	        let dataAfterConditions = dataResolver.applyOptions(returnTypeName, currRecord, conditionsOptions);
+	        if (!lodash.isEmpty(dataAfterConditions)) {
+	            if (conditionsArgs && (_graphql.isObjectType(returnType) || _graphql.isInterfaceType(returnType))) {
+	                const pullIds = yield filterNested(conditionsArgs, null, returnType, currRecord, null, dataResolver, _context, _info);
+	                dataAfterConditions = dataAfterConditions.filter(entry => !pullIds.has(entry.id));
+	            }
+	        }
+	        if (lodash.isEmpty(dataAfterConditions)) {
+	            meetsConditions = false;
+	        }
+	    }
+	    return meetsConditions;
+	});
 
 	class GraphQLSchemaBuilder {
 	    constructor(typeDefs = '', $config) {
@@ -67635,6 +67690,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                fields: {
 	                    data: { type: new _graphql.GraphQLNonNull(generator.generateUpdateInput()) },
 	                    where: { type: new _graphql.GraphQLNonNull(generator.generateWhereUniqueInput()) },
+	                    conditions: { type: generator.generateWhereInput(this.dataResolver.getFeatures().logicalOperators), description: 'Update will only be performed if these conditions are met' },
 	                    clientMutationId: { type: _graphql.GraphQLString }
 	                }
 	            });
@@ -67712,7 +67768,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	 * Implementation of atob() according to the HTML and Infra specs, except that
 	 * instead of throwing INVALID_CHARACTER_ERR we return null.
 	 */
-	function atob(data) {
+	function atob$1(data) {
 	  // Web IDL requires DOMStrings to just be converted using ECMAScript
 	  // ToString, which in our case amounts to using a template literal.
 	  data = `${data}`;
@@ -67812,7 +67868,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	  return undefined;
 	}
 
-	var atob_1 = atob;
+	var atob_1 = atob$1;
 
 	/**
 	 * btoa() as defined by the HTML and Infra specs, which mostly just references
@@ -70971,8 +71027,8 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                            }
 	                            fields[field.name] = currType;
 	                        }
-	                        fields['__typename'] = String;
-	                        fields['importID'] = String;
+	                        fields.__typename = String;
+	                        fields.importID = String;
 	                    });
 	                    const fortuneName = this.getFortuneTypeName(name);
 	                    const fortuneConfigForName = fortuneConfig[fortuneName] ? fortuneConfig[fortuneName] : {};
@@ -71323,6 +71379,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                name: deleteInputName,
 	                fields: {
 	                    where: { type: new _graphql.GraphQLNonNull(generator.generateWhereUniqueInput()) },
+	                    conditions: { type: generator.generateWhereInput(this.dataResolver.getFeatures().logicalOperators), description: 'Delete will only be performed if these conditions are met' },
 	                    clientMutationId: { type: _graphql.GraphQLString }
 	                }
 	            });
@@ -71477,6 +71534,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                    create: { type: new _graphql.GraphQLNonNull(generator.generateCreateInput()) },
 	                    update: { type: new _graphql.GraphQLNonNull(generator.generateUpdateInput()) },
 	                    where: { type: new _graphql.GraphQLNonNull(generator.generateWhereUniqueInput()) },
+	                    conditions: { type: generator.generateWhereInput(this.dataResolver.getFeatures().logicalOperators), description: 'In case of update it will only be performed if these conditions are met' },
 	                    clientMutationId: { type: _graphql.GraphQLString }
 	                }
 	            });
@@ -71610,10 +71668,11 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	}
 
 	class GenerateMigrations {
-	    constructor($genie) {
+	    constructor($genie, $currOutputObjectTypeDefs) {
 	        this.resolvers = new Map();
 	        this.fieldsOnObject = new Map();
 	        this.genie = $genie;
+	        this.currOutputObjectTypeDefs = $currOutputObjectTypeDefs;
 	        this.generate();
 	    }
 	    generate() {
@@ -71634,9 +71693,22 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            return yield this.genie.getRawData(args.types || [], context);
 	        }));
 	        this.resolvers.set('Query', exportDataResolver);
+	        this.currOutputObjectTypeDefs.add(`
+			type ImportDataPayload {
+				data: JSON,
+				unalteredData: JSON,
+				missingData: JSON
+			}
+		`);
+	        this.currOutputObjectTypeDefs.add(`
+			input ConditionsInput {
+				id: [String]!,
+				conditions: JSON!
+			}
+		`);
 	        this.fieldsOnObject.set('Mutation', {
 	            'importData': {
-	                type: _graphql.GraphQLBoolean,
+	                type: 'ImportDataPayload',
 	                args: {
 	                    data: {
 	                        type: new _graphql.GraphQLNonNull(new _graphql.GraphQLList(GraphQLJSON))
@@ -71649,14 +71721,18 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                    },
 	                    defaultTypename: {
 	                        type: _graphql.GraphQLBoolean,
-	                        descriptions: 'Must be provided if every object in data does not have a `__typename` property'
+	                        descriptions: 'Must be provided if every object in data does not have a `__typename` property or ids with the typename encoded'
+	                    },
+	                    conditions: {
+	                        type: 'ConditionsInput',
+	                        descriptions: 'Conditions can be used to only update records if they are met'
 	                    }
 	                }
 	            }
 	        });
 	        const importDataResolver = new Map();
 	        importDataResolver.set('importData', (_root, args, context, _info) => __awaiter(this, void 0, void 0, function* () {
-	            return yield this.genie.importRawData(args.data, args.merge, args.defaultTypename, context);
+	            return yield this.genie.importRawData(args.data, args.merge, args.defaultTypename, context, args.conditions);
 	        }));
 	        this.resolvers.set('Mutation', importDataResolver);
 	    }
@@ -71760,7 +71836,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                this.generators.push(new GenerateDelete(this.graphQLFortune, 'Mutation', nodeTypes, this.config, currInputObjectTypes, currOutputObjectTypeDefs, this.schemaInfo, this.schema, this.relations));
 	            }
 	            if (this.config.generateMigrations) {
-	                this.generators.push(new GenerateMigrations(this));
+	                this.generators.push(new GenerateMigrations(this, currOutputObjectTypeDefs));
 	            }
 	            let newTypes = '';
 	            currInputObjectTypes.forEach(inputObjectType => {
@@ -71842,17 +71918,55 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            }
 	            return currIDs;
 	        };
-	        this.importRawData = (data, merge = false, defaultTypename, context) => __awaiter(this, void 0, void 0, function* () {
+	        this.importRawData = (data, merge = false, defaultTypename, context, conditions) => __awaiter(this, void 0, void 0, function* () {
 	            const meta = context ? { context } : undefined;
-	            let index = 0;
+	            conditions = conditions && merge ? conditions : [];
+	            // altered data
+	            const alteredData = new Map();
+	            // there is a condition but nothing with this id even exists
+	            const missingIds = [];
+	            const missingData = [];
+	            // didn't meet the condition
+	            const unalteredData = [];
+	            const userTypes = this.getUserTypes();
+	            const conditionsMap = new Map();
+	            conditions.forEach(condition => {
+	                if (!lodash.isEmpty(condition.conditions)) {
+	                    const ids = lodash.isArray(condition.id) ? condition.id : [condition.id];
+	                    ids.forEach(id => {
+	                        if (!conditionsMap.has(id)) {
+	                            conditionsMap.set(id, []);
+	                        }
+	                        conditionsMap.get(id).push(condition.conditions);
+	                    });
+	                }
+	            });
 	            const createPromises = [];
 	            let createData = data;
 	            const objectsMap = new Map();
-	            data = data.map(object => {
-	                const typeName = object['__typename'] || defaultTypename;
+	            data = data.map((object, index) => {
+	                if (lodash.isEmpty(object)) {
+	                    throw new Error('Data has a null or empty object at index ' + index);
+	                }
+	                let typeName = object.__typename;
+	                let idTypename;
+	                if (!typeName && lodash.isString(object.id)) {
+	                    try {
+	                        idTypename = atob(object.id).split(':')[1];
+	                    }
+	                    catch (e) {
+	                        // empty by design
+	                    }
+	                }
+	                typeName = idTypename && !typeName ? idTypename : typeName;
+	                typeName = typeName ? typeName : defaultTypename;
 	                if (!typeName) {
 	                    throw new Error('Every object must have a __typename or defaultTypeName must be provided');
 	                }
+	                else if (!userTypes.includes(typeName)) {
+	                    throw new Error(`Bad typename in data, ${typeName} does not exist in schema`);
+	                }
+	                object.__typename = typeName;
 	                object.id = object.id || this.graphQLFortune.computeId(typeName);
 	                return object;
 	            });
@@ -71860,32 +71974,38 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                createData = [];
 	                const findPromises = [];
 	                data.forEach(object => {
-	                    const typeName = object['__typename'] || defaultTypename;
-	                    findPromises.push(this.graphQLFortune.find(typeName, object['id']));
+	                    const typeName = object.__typename;
+	                    findPromises.push(this.graphQLFortune.find(typeName, object.id));
 	                });
 	                const findResults = yield Promise.all(findPromises);
-	                findResults.forEach(result => {
+	                findResults.forEach((result, index) => {
 	                    if (lodash.isEmpty(result)) {
-	                        createData.push(data[index]);
+	                        if (conditionsMap.has(data[index].id)) {
+	                            missingIds.push(data[index].id);
+	                            missingData.push(data[index]);
+	                        }
+	                        else {
+	                            createData.push(data[index]);
+	                        }
 	                    }
 	                    else {
 	                        objectsMap.set(result.id, result);
 	                    }
-	                    index++;
 	                });
 	            }
 	            createData.forEach(object => {
-	                const typeName = object['__typename'] || defaultTypename;
+	                const typeName = object.__typename;
 	                const schemaType = this.schema.getType(typeName);
 	                const fieldMap = schemaType.getFields();
 	                const objectFields = Object.keys(object);
 	                const record = {};
 	                if (merge && object.id) {
-	                    record['id'] = object.id;
+	                    record.id = object.id;
 	                }
 	                objectFields.forEach(fieldName => {
 	                    const schemaField = fieldMap[fieldName];
 	                    const currVal = object[fieldName];
+	                    // only add if truthy and not empty
 	                    let addToRecord = false;
 	                    if (lodash.isArray(currVal) && !lodash.isEmpty(currVal)) {
 	                        addToRecord = true;
@@ -71902,7 +72022,8 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                });
 	                createPromises.push(new Promise((resolve, reject) => {
 	                    this.graphQLFortune.create(typeName, record, meta).then(createdObj => {
-	                        objectsMap.set(object['id'], createdObj);
+	                        objectsMap.set(object.id, createdObj);
+	                        alteredData.set(object.id, createdObj);
 	                        resolve(createdObj);
 	                    }).catch(reason => {
 	                        reject(reason);
@@ -71910,87 +72031,112 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                }));
 	            });
 	            yield Promise.all(createPromises);
-	            index = 0;
 	            const updatePromies = [];
-	            data.forEach(object => {
-	                const typeName = object['__typename'] || defaultTypename;
+	            // do the updates
+	            yield Promise.all(data.map((object) => __awaiter(this, void 0, void 0, function* () {
+	                if (missingIds.includes(object.id)) {
+	                    return;
+	                }
+	                const typeName = object.__typename;
 	                const schemaType = this.schema.getType(typeName);
-	                const fieldMap = schemaType.getFields();
-	                const objectFields = Object.keys(object);
-	                let update = {};
-	                objectFields.forEach(fieldName => {
-	                    const schemaField = fieldMap[fieldName];
-	                    if (schemaField) {
-	                        const schemaFieldType = _graphql.getNamedType(schemaField.type);
-	                        if (merge || !_graphql.isScalarType(schemaFieldType)) {
-	                            let currValue = object[fieldName];
-	                            if (!lodash.isEmpty(currValue)) {
-	                                if (!_graphql.isScalarType(schemaFieldType)) {
-	                                    if (lodash.isArray(currValue)) {
-	                                        // if it's an array then set
-	                                        // use new ids if found
-	                                        currValue = this.mapIdsToCreatedIds(currValue, objectsMap);
-	                                        update[fieldName] = { set: currValue };
-	                                    }
-	                                    else {
-	                                        // if not an array we need to handle scalars vs objects with push/pull/set
-	                                        // handle in case it's the full object not just id
-	                                        if (lodash.isPlainObject(currValue) && currValue.id) {
-	                                            currValue = currValue.id;
-	                                        }
-	                                        // if it's not an object than it's just an id so we should set it
-	                                        // tslint:disable-next-line:prefer-conditional-expression
-	                                        if (!lodash.isPlainObject(currValue)) {
-	                                            // use the new object id
-	                                            update[fieldName] = this.mapIdsToCreatedIds(currValue, objectsMap);
+	                const existingData = objectsMap.get(object.id);
+	                let objMeetsConditions = true;
+	                if (conditionsMap.has(object.id)) {
+	                    const allConditions = yield Promise.all(conditionsMap.get(object.id).map((condition) => __awaiter(this, void 0, void 0, function* () {
+	                        return yield meetsConditions(condition, typeName, schemaType, existingData, this.graphQLFortune, lodash.get(context, 'context', context), lodash.get(context, 'info'));
+	                    })));
+	                    objMeetsConditions = !allConditions.includes(false);
+	                }
+	                if (!objMeetsConditions) {
+	                    unalteredData.push(existingData);
+	                }
+	                else {
+	                    let update = {};
+	                    const objectFields = Object.keys(object);
+	                    const fieldMap = schemaType.getFields();
+	                    objectFields.forEach(fieldName => {
+	                        const schemaField = fieldMap[fieldName];
+	                        if (schemaField) {
+	                            const schemaFieldType = _graphql.getNamedType(schemaField.type);
+	                            if (merge || !_graphql.isScalarType(schemaFieldType)) {
+	                                let currValue = object[fieldName];
+	                                if (!lodash.isEmpty(currValue)) {
+	                                    if (!_graphql.isScalarType(schemaFieldType)) {
+	                                        if (lodash.isArray(currValue)) {
+	                                            // if it's an array then set
+	                                            // use new ids if found
+	                                            currValue = this.mapIdsToCreatedIds(currValue, objectsMap);
+	                                            update[fieldName] = { set: currValue };
 	                                        }
 	                                        else {
-	                                            // it's an object so it is push/pull/set
-	                                            if (currValue.push) {
-	                                                currValue.push = this.mapIdsToCreatedIds(currValue.push, objectsMap);
+	                                            // if not an array we need to handle scalars vs objects with push/pull/set
+	                                            // handle in case it's the full object not just id
+	                                            if (lodash.isPlainObject(currValue) && currValue.id) {
+	                                                currValue = currValue.id;
 	                                            }
-	                                            if (currValue.pull) {
-	                                                currValue.pull = this.mapIdsToCreatedIds(currValue.pull, objectsMap);
+	                                            // if it's not an object than it's just an id so we should set it
+	                                            // tslint:disable-next-line:prefer-conditional-expression
+	                                            if (!lodash.isPlainObject(currValue)) {
+	                                                // use the new object id
+	                                                update[fieldName] = this.mapIdsToCreatedIds(currValue, objectsMap);
 	                                            }
-	                                            if (currValue.set) {
-	                                                currValue.set = this.mapIdsToCreatedIds(currValue.set, objectsMap);
+	                                            else {
+	                                                // it's an object so it is push/pull/set
+	                                                if (currValue.push) {
+	                                                    currValue.push = this.mapIdsToCreatedIds(currValue.push, objectsMap);
+	                                                }
+	                                                if (currValue.pull) {
+	                                                    currValue.pull = this.mapIdsToCreatedIds(currValue.pull, objectsMap);
+	                                                }
+	                                                if (currValue.set) {
+	                                                    currValue.set = this.mapIdsToCreatedIds(currValue.set, objectsMap);
+	                                                }
+	                                                update[fieldName] = currValue;
 	                                            }
-	                                            update[fieldName] = currValue;
 	                                        }
 	                                    }
-	                                }
-	                                else if (!lodash.isPlainObject(currValue)) {
-	                                    currValue = this.mapIdsToCreatedIds(currValue, objectsMap);
-	                                    // not an object and a scalar but lets check if it's an array
-	                                    update[fieldName] = lodash.isArray(currValue) ? { set: currValue } : currValue;
-	                                }
-	                                else {
-	                                    // it's an object so it is push/pull/set
-	                                    if (currValue.push) {
-	                                        currValue.push = this.mapIdsToCreatedIds(currValue.push, objectsMap);
+	                                    else if (!lodash.isPlainObject(currValue)) {
+	                                        currValue = this.mapIdsToCreatedIds(currValue, objectsMap);
+	                                        // not an object and a scalar but lets check if it's an array
+	                                        update[fieldName] = lodash.isArray(currValue) ? { set: currValue } : currValue;
 	                                    }
-	                                    if (currValue.pull) {
-	                                        currValue.pull = this.mapIdsToCreatedIds(currValue.pull, objectsMap);
+	                                    else {
+	                                        // it's an object so it is push/pull/set
+	                                        if (currValue.push) {
+	                                            currValue.push = this.mapIdsToCreatedIds(currValue.push, objectsMap);
+	                                        }
+	                                        if (currValue.pull) {
+	                                            currValue.pull = this.mapIdsToCreatedIds(currValue.pull, objectsMap);
+	                                        }
+	                                        if (currValue.set) {
+	                                            currValue.set = this.mapIdsToCreatedIds(currValue.set, objectsMap);
+	                                        }
+	                                        update[fieldName] = currValue;
 	                                    }
-	                                    if (currValue.set) {
-	                                        currValue.set = this.mapIdsToCreatedIds(currValue.set, objectsMap);
-	                                    }
-	                                    update[fieldName] = currValue;
 	                                }
 	                            }
 	                        }
+	                    });
+	                    if (!lodash.isEmpty(update)) {
+	                        update.id = objectsMap.get(object.id).id;
+	                        update = this.graphQLFortune.generateUpdates(update);
+	                        updatePromies.push(new Promise((resolve, reject) => {
+	                            this.graphQLFortune.update(typeName, update, meta, { fortuneFormatted: true }).then(updatedObj => {
+	                                alteredData.set(object.id, updatedObj);
+	                                resolve(updatedObj);
+	                            }).catch(reason => {
+	                                reject(reason);
+	                            });
+	                        }));
 	                    }
-	                });
-	                if (!lodash.isEmpty(update)) {
-	                    update['id'] = objectsMap.get(object.id)['id'];
-	                    update = this.graphQLFortune.generateUpdates(update);
-	                    // console.log(typeName, update);
-	                    updatePromies.push(this.graphQLFortune.update(typeName, update, meta, { fortuneFormatted: true }));
 	                }
-	                index++;
-	            });
+	            })));
 	            yield Promise.all(updatePromies);
-	            return true;
+	            return {
+	                data: [...alteredData.values()],
+	                unalteredData,
+	                missingData
+	            };
 	        });
 	        this.getUserTypes = () => {
 	            const introspection = _graphql.introspectionFromSchema(this.schema, { descriptions: false });
@@ -72029,6 +72175,25 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            }
 	            return introspection;
 	        };
+	        /**
+	         * This method does not need to be called manually, it is automatically called upon the first request if it is not connected already.
+	         * However, it may be useful if manually reconnect is needed.
+	         * The resolved value is the instance itself.
+	         * @returns Promise<GraphQLGenie>
+	         */
+	        this.connect = () => __awaiter(this, void 0, void 0, function* () {
+	            yield this.graphQLFortune.getStore().connect();
+	            return this;
+	        });
+	        /**
+	         * Close adapter connection, and reset connection state.
+	         * The resolved value is the instance itself.
+	         * @returns Promise<GraphQLGenie>
+	         */
+	        this.disconnect = () => __awaiter(this, void 0, void 0, function* () {
+	            yield this.graphQLFortune.getStore().disconnect();
+	            return this;
+	        });
 	        this.fortuneOptions = options.fortuneOptions ? options.fortuneOptions : {};
 	        this.fortuneOptions.settings = this.fortuneOptions.settings ? this.fortuneOptions.settings : {};
 	        if (!this.fortuneOptions.settings.hasOwnProperty('enforceLinks')) {
@@ -94385,7 +94550,7 @@ exports.AboutComponent = AboutComponent;
 /* 436 */
 /***/ (function(module, exports) {
 
-module.exports = "<div style=\"text-align:center\"><img width=\"128px\" src=\"resources/logo.svg\" alt=\"GraphQL Genie Client logo\"></div>\n\n# GraphQL Genie Client\n\n\n[![Dependency Status](https://david-dm.org/genie-team/graphql-genie-client.svg)](https://david-dm.org/genie-team/graphql-genie-client)\n[![devDependency Status](https://david-dm.org/genie-team/graphql-genie-client/dev-status.svg)](https://david-dm.org/genie-team/graphql-genie-client/?type=dev)\n\n**View in github pages** [here](https://github.com/genie-team/graphql-genie-client).\n\nA React app providing a demo and example of [GraphQL Genie](https://github.com/genie-team/graphql-genie). __No coding required__.\nAll you need is to write [GraphQL Type Schema](https://graphql.org/learn/schema/) (or use the example provided). See how [GraphQL Genie](https://github.com/genie-team/graphql-genie) turns graphql type definitions into a fully featured GraphQL API with referential integrity and inverse updates. \n\nData can be mocked, stored in memory or stored in your browsers IndexedDB (so refreshing doesn't wipe out your data).\n\n## Settings\n\n#### Data Mode\n\n- Memory\n\n  - Mutations will save to memory and queries will query from memory. Reloading will erase all data\n\n- IndexedDB\n\n  - Mutations will save to browser database and queries will query from the database. Data will be saved on reload of page\n\n- Mock\n\n  - Mutations will do nothing, queries will return mock data\n\n## Roadmap\n\nAbility to export data\n\n## Development\n\n```sh\nnpm install\nnpm run build\nnpm run start\n```\n\n## Thanks/Credit\n\n[GraphQL Faker](https://github.com/APIs-guru/graphql-faker) from which I copied the react component\n\n[Prisma GraphQL / Graphcool](https://github.com/prismagraphql/prisma) for inspiration\n\nLogo Icon made by [Freepik](http://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/) is licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/)\n"
+module.exports = "<div style=\"text-align:center\"><img width=\"128px\" src=\"resources/logo.svg\" alt=\"GraphQL Genie Client logo\"></div>\n\n# GraphQL Genie Client\n\n\n[![Dependency Status](https://david-dm.org/genie-team/graphql-genie-client.svg)](https://david-dm.org/genie-team/graphql-genie-client)\n[![devDependency Status](https://david-dm.org/genie-team/graphql-genie-client/dev-status.svg)](https://david-dm.org/genie-team/graphql-genie-client/?type=dev)\n\n[![donate](http://img.shields.io/liberapay/receives/aCoreyJ.svg?logo=liberapay)](https://liberapay.com/aCoreyJ/donate) \t\n\n**View in github pages** [here](https://github.com/genie-team/graphql-genie-client).\n\nA React app providing a demo and example of [GraphQL Genie](https://github.com/genie-team/graphql-genie). __No coding required__.\nAll you need is to write [GraphQL Type Schema](https://graphql.org/learn/schema/) (or use the example provided). See how [GraphQL Genie](https://github.com/genie-team/graphql-genie) turns graphql type definitions into a fully featured GraphQL API with referential integrity and inverse updates. \n\nData can be mocked, stored in memory or stored in your browsers IndexedDB (so refreshing doesn't wipe out your data).\n\n## Settings\n\n#### Data Mode\n\n- Memory\n\n  - Mutations will save to memory and queries will query from memory. Reloading will erase all data\n\n- IndexedDB\n\n  - Mutations will save to browser database and queries will query from the database. Data will be saved on reload of page\n\n- Mock\n\n  - Mutations will do nothing, queries will return mock data\n\n## Roadmap\n\nAbility to export data\n\n## Development\n\n```sh\nnpm install\nnpm run build\nnpm run start\n```\n\n## Thanks/Credit\n\n[GraphQL Faker](https://github.com/APIs-guru/graphql-faker) from which I copied the react component\n\n[Prisma GraphQL / Graphcool](https://github.com/prismagraphql/prisma) for inspiration\n\nLogo Icon made by [Freepik](http://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/) is licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/)\n"
 
 /***/ }),
 /* 437 */

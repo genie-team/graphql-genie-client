@@ -241,6 +241,9 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 		const schema = genie ? genie.getSchema() : null;
 		return (
 			<div className="genie-editor-container">
+				<div className="donate">
+					<a href="https://liberapay.com/aCoreyJ/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"/></a>
+				</div>
 				{(activeTab === 0 || activeTab === 2) &&
 					<style dangerouslySetInnerHTML={{
 						__html: `
