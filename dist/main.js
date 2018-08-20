@@ -44979,7 +44979,7 @@ module.exports.outputRecord = function (type, record) {
       continue;
     }
 
-    if (hasField) result[field] = value;
+    result[field] = value;
   }
 
   return result;

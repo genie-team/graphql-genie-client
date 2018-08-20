@@ -2837,8 +2837,8 @@ for-own@^0.1.4:
     for-in "^1.0.1"
 
 fortune-localforage@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/fortune-localforage/-/fortune-localforage-1.1.0.tgz#59e2738948f042a02c93bb51e837e7b5ecaacbf8"
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/fortune-localforage/-/fortune-localforage-1.2.0.tgz#a59c4bc63fffd177b3cd4faa827a4ae3cbee871a"
   dependencies:
     eslint-config-google "^0.9.1"
 
