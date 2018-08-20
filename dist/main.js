@@ -66747,11 +66747,9 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 
 		directive @unique on FIELD_DEFINITION
 
-		directive @updatedTimestamp on FIELD_DEFINITION
+		directive @updatedTimestamp(allowManual: Boolean = false) on FIELD_DEFINITION
 
-		directive @createdTimestamp on FIELD_DEFINITION
-
-		directive @createdTimestamp on FIELD_DEFINITION
+		directive @createdTimestamp(allowManual: Boolean = false) on FIELD_DEFINITION
 
 		"""
 		An object with an ID
@@ -66878,6 +66876,9 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	        const type = field.type;
 	        if (type.name === 'DateTime') {
 	            field['updatedTimestamp'] = true;
+	            if (this.args && this.args.allowManual) {
+	                field['updatedTimestampAllowManual'] = true;
+	            }
 	        }
 	    }
 	}
@@ -66886,6 +66887,9 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	        const type = field.type;
 	        if (type.name === 'DateTime') {
 	            field.createdTimestamp = true;
+	            if (this.args && this.args.allowManual) {
+	                field['createdTimestampAllowManual'] = true;
+	            }
 	        }
 	    }
 	}
@@ -66970,10 +66974,10 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	            if (field.name === 'id') {
 	                isAutoField = true;
 	            }
-	            else if (lodash.get(field, 'metadata.updatedTimestamp') === true) {
+	            else if (lodash.get(field, 'metadata.updatedTimestamp') === true && !lodash.get(field, 'metadata.updatedTimestampAllowManual', false)) {
 	                isAutoField = true;
 	            }
-	            else if (lodash.get(field, 'metadata.createdTimestamp') === true) {
+	            else if (lodash.get(field, 'metadata.createdTimestamp') === true && !lodash.get(field, 'metadata.createdTimestampAllowManual', false)) {
 	                isAutoField = true;
 	            }
 	        }
@@ -70861,7 +70865,9 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                                this.addInputHook(name, (context, record) => {
 	                                    switch (context.request.method) {
 	                                        case 'create':
-	                                            record[field.name] = new Date();
+	                                            if ((isArray && lodash.isEmpty(record[field.name])) || !record[field.name]) {
+	                                                record[field.name] = new Date();
+	                                            }
 	                                            return record;
 	                                    }
 	                                });
@@ -70872,7 +70878,9 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                                        case 'update':
 	                                            if (!('replace' in update))
 	                                                update.replace = {};
-	                                            update.replace[field.name] = new Date();
+	                                            if ((isArray && lodash.isEmpty(update.replace[field.name])) || !update.replace[field.name]) {
+	                                                update.replace[field.name] = new Date();
+	                                            }
 	                                            return update;
 	                                    }
 	                                });
@@ -70905,7 +70913,6 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 	                            fields[field.name] = currType;
 	                        }
 	                        fields.__typename = String;
-	                        fields.importID = String;
 	                    });
 	                    const fortuneName = this.getFortuneTypeName(name);
 	                    const fortuneConfigForName = fortuneConfig[fortuneName] ? fortuneConfig[fortuneName] : {};
@@ -71597,7 +71604,7 @@ var introspectionQuerySansSubscriptions = exports.introspectionQuerySansSubscrip
 						Note when merging list fields by default the array in the provided data will replace the existing data array. If you don't want to do that instead of providing an array you can provide an object with fields for push and pull or set. `
 	                    },
 	                    defaultTypename: {
-	                        type: _graphql.GraphQLBoolean,
+	                        type: _graphql.GraphQLString,
 	                        descriptions: 'Must be provided if every object in data does not have a `__typename` property or ids with the typename encoded'
 	                    },
 	                    conditions: {
