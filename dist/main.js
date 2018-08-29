@@ -2551,9 +2551,9 @@ GraphQLInputObjectType.prototype.inspect = GraphQLInputObjectType.prototype.toSt
 /***/ (function(module, exports, __webpack_require__) {
 
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
-// Distributed under an MIT license: http://codemirror.net/LICENSE
+// Distributed under an MIT license: https://codemirror.net/LICENSE
 
-// This is CodeMirror (http://codemirror.net), a code editor
+// This is CodeMirror (https://codemirror.net), a code editor
 // implemented in JavaScript on top of the browser's DOM.
 //
 // You can find some technical background for some of the code below
@@ -10285,6 +10285,7 @@ function defineOptions(CodeMirror) {
   option("tabindex", null, function (cm, val) { return cm.display.input.getField().tabIndex = val || ""; });
   option("autofocus", null);
   option("direction", "ltr", function (cm, val) { return cm.doc.setDirection(val); }, true);
+  option("phrases", null);
 }
 
 function guttersChanged(cm) {
@@ -11122,6 +11123,11 @@ var addEditorMethods = function(CodeMirror) {
       signalLater(this, "swapDoc", this, old);
       return old
     }),
+
+    phrase: function(phraseText) {
+      var phrases = this.options.phrases;
+      return phrases && Object.prototype.hasOwnProperty.call(phrases, phraseText) ? phrases[phraseText] : phraseText
+    },
 
     getInputField: function(){return this.display.input.getField()},
     getWrapperElement: function(){return this.display.wrapper},
@@ -12240,7 +12246,7 @@ CodeMirror$1.fromTextArea = fromTextArea;
 
 addLegacyProps(CodeMirror$1);
 
-CodeMirror$1.version = "5.39.2";
+CodeMirror$1.version = "5.40.0";
 
 return CodeMirror$1;
 
@@ -18302,9 +18308,6 @@ function getStoreKeyName(fieldName, args, directives) {
     }
     var completeFieldName = fieldName;
     if (args) {
-        // We can't use `JSON.stringify` here since it's non-deterministic,
-        // and can lead to different store key names being created even though
-        // the `args` object used during creation has the same properties/values.
         var stringifiedArgs = fast_json_stable_stringify_default()(args);
         completeFieldName += "(" + stringifiedArgs + ")";
     }
@@ -18359,9 +18362,6 @@ function isJsonValue(jsonObject) {
 function defaultValueFromVariable(node) {
     throw new Error("Variable nodes are not supported by valueFromNode");
 }
-/**
- * Evaluate a ValueNode and yield its value in its natural JS form.
- */
 function valueFromNode(node, onVariable) {
     if (onVariable === void 0) { onVariable = defaultValueFromVariable; }
     switch (node.kind) {
@@ -18402,7 +18402,6 @@ function getMutationDefinition(doc) {
     }
     return mutationDef;
 }
-// Checks the document for errors and throws an exception if there is an error.
 function checkDocument(doc) {
     if (doc.kind !== 'Document') {
         throw new Error("Expecting a parsed GraphQL document. Perhaps you need to wrap the query string in a \"gql\" tag? http://docs.apollostack.com/apollo-client/core.html#gql");
@@ -18437,7 +18436,6 @@ function getOperationName(doc) {
     })
         .map(function (x) { return x.name.value; })[0] || null);
 }
-// Returns the FragmentDefinitions from a particular document as an array
 function getFragmentDefinitions(doc) {
     return doc.definitions.filter(function (definition) { return definition.kind === 'FragmentDefinition'; });
 }
@@ -18461,11 +18459,6 @@ function getFragmentDefinition(doc) {
     }
     return fragmentDef;
 }
-/**
- * Returns the first operation definition found in this document.
- * If no operation definition is found, the first fragment definition will be returned.
- * If no definitions are found, an error will be thrown.
- */
 function getMainDefinition(queryDoc) {
     checkDocument(queryDoc);
     var fragmentDefinition;
@@ -18480,8 +18473,6 @@ function getMainDefinition(queryDoc) {
             }
         }
         if (definition.kind === 'FragmentDefinition' && !fragmentDefinition) {
-            // we do this because we want to allow multiple fragment definitions
-            // to precede an operation definition.
             fragmentDefinition = definition;
         }
     }
@@ -18490,8 +18481,6 @@ function getMainDefinition(queryDoc) {
     }
     throw new Error('Expected a parsed GraphQL query with a query, mutation, subscription, or a fragment.');
 }
-// Utility function that takes a list of fragment definitions and makes a hash out of them
-// that maps the name of the fragment to the fragment definition.
 function createFragmentMap(fragments) {
     if (fragments === void 0) { fragments = []; }
     var symTable = {};
@@ -18519,9 +18508,6 @@ function getDefaultValues(definition) {
     }
     return {};
 }
-/**
- * Returns the names of all variables declared by the operation.
- */
 function variablesInOperation(operation) {
     var names = new Set();
     if (operation.variableDefinitions) {
@@ -18750,18 +18736,18 @@ function execute(link, operation) {
 }
 //# sourceMappingURL=link.js.map
 // CONCATENATED MODULE: ./node_modules/apollo-link/lib/index.js
-/* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "empty", function() { return empty; });
-/* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "from", function() { return from; });
-/* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "split", function() { return split; });
-/* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "concat", function() { return concat; });
-/* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "ApolloLink", function() { return ApolloLink; });
-/* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "execute", function() { return execute; });
-/* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "createOperation", function() { return createOperation; });
-/* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "makePromise", function() { return makePromise; });
-/* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "toPromise", function() { return toPromise; });
-/* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "fromPromise", function() { return fromPromise; });
-/* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "fromError", function() { return fromError; });
-/* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "Observable", function() { return lib; });
+/* concated harmony reexport empty */__webpack_require__.d(__webpack_exports__, "empty", function() { return empty; });
+/* concated harmony reexport from */__webpack_require__.d(__webpack_exports__, "from", function() { return from; });
+/* concated harmony reexport split */__webpack_require__.d(__webpack_exports__, "split", function() { return split; });
+/* concated harmony reexport concat */__webpack_require__.d(__webpack_exports__, "concat", function() { return concat; });
+/* concated harmony reexport ApolloLink */__webpack_require__.d(__webpack_exports__, "ApolloLink", function() { return ApolloLink; });
+/* concated harmony reexport execute */__webpack_require__.d(__webpack_exports__, "execute", function() { return execute; });
+/* concated harmony reexport createOperation */__webpack_require__.d(__webpack_exports__, "createOperation", function() { return createOperation; });
+/* concated harmony reexport makePromise */__webpack_require__.d(__webpack_exports__, "makePromise", function() { return makePromise; });
+/* concated harmony reexport toPromise */__webpack_require__.d(__webpack_exports__, "toPromise", function() { return toPromise; });
+/* concated harmony reexport fromPromise */__webpack_require__.d(__webpack_exports__, "fromPromise", function() { return fromPromise; });
+/* concated harmony reexport fromError */__webpack_require__.d(__webpack_exports__, "fromError", function() { return fromError; });
+/* concated harmony reexport Observable */__webpack_require__.d(__webpack_exports__, "Observable", function() { return lib; });
 
 
 
@@ -20830,7 +20816,7 @@ function getFieldDef(schema, parentType, fieldNode) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
-// Distributed under an MIT license: http://codemirror.net/LICENSE
+// Distributed under an MIT license: https://codemirror.net/LICENSE
 
 (function(mod) {
   if (true) // CommonJS
@@ -21126,7 +21112,7 @@ function getFieldDef(schema, parentType, fieldNode) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
-// Distributed under an MIT license: http://codemirror.net/LICENSE
+// Distributed under an MIT license: https://codemirror.net/LICENSE
 
 // Open simple dialogs on top of an editor. Relies on dialog.css.
 
@@ -28703,7 +28689,7 @@ module.exports = Token;
 /***/ (function(module, exports, __webpack_require__) {
 
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
-// Distributed under an MIT license: http://codemirror.net/LICENSE
+// Distributed under an MIT license: https://codemirror.net/LICENSE
 
 (function(mod) {
   if (true) // CommonJS
@@ -28851,7 +28837,7 @@ module.exports = Token;
 /***/ (function(module, exports, __webpack_require__) {
 
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
-// Distributed under an MIT license: http://codemirror.net/LICENSE
+// Distributed under an MIT license: https://codemirror.net/LICENSE
 
 (function(mod) {
   if (true) // CommonJS
@@ -29000,7 +28986,7 @@ module.exports = Token;
 /***/ (function(module, exports, __webpack_require__) {
 
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
-// Distributed under an MIT license: http://codemirror.net/LICENSE
+// Distributed under an MIT license: https://codemirror.net/LICENSE
 
 (function(mod) {
   if (true) // CommonJS
@@ -29108,7 +29094,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
-// Distributed under an MIT license: http://codemirror.net/LICENSE
+// Distributed under an MIT license: https://codemirror.net/LICENSE
 
 // Defines jumpToLine command. Uses dialog.js if present.
 
@@ -29124,8 +29110,9 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     else f(prompt(shortText, deflt));
   }
 
-  var jumpDialog =
-      'Jump to line: <input type="text" style="width: 10em" class="CodeMirror-search-field"/> <span style="color: #888" class="CodeMirror-search-hint">(Use line:column or scroll% syntax)</span>';
+  function getJumpDialog(cm) {
+    return cm.phrase("Jump to line:") + ' <input type="text" style="width: 10em" class="CodeMirror-search-field"/> <span style="color: #888" class="CodeMirror-search-hint">' + cm.phrase("(Use line:column or scroll% syntax)") + '</span>';
+  }
 
   function interpretLine(cm, string) {
     var num = Number(string)
@@ -29135,7 +29122,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
   CodeMirror.commands.jumpToLine = function(cm) {
     var cur = cm.getCursor();
-    dialog(cm, jumpDialog, "Jump to line:", (cur.line + 1) + ":" + cur.ch, function(posStr) {
+    dialog(cm, getJumpDialog(cm), cm.phrase("Jump to line:"), (cur.line + 1) + ":" + cur.ch, function(posStr) {
       if (!posStr) return;
 
       var match;
@@ -29160,7 +29147,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
-// Distributed under an MIT license: http://codemirror.net/LICENSE
+// Distributed under an MIT license: https://codemirror.net/LICENSE
 
 // A rough approximation of Sublime Text's keybindings
 // Depends on addon/search/searchcursor.js and optionally addon/dialog/dialogs.js
@@ -35247,7 +35234,7 @@ function renderType(type) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
-// Distributed under an MIT license: http://codemirror.net/LICENSE
+// Distributed under an MIT license: https://codemirror.net/LICENSE
 
 (function(mod) {
   if (true) // CommonJS
@@ -35684,7 +35671,7 @@ function renderType(type) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
-// Distributed under an MIT license: http://codemirror.net/LICENSE
+// Distributed under an MIT license: https://codemirror.net/LICENSE
 
 (function(mod) {
   if (true) // CommonJS
@@ -35818,9 +35805,7 @@ function renderType(type) {
         var prev = cur.ch == 0 ? " " : cm.getRange(Pos(cur.line, cur.ch - 1), cur)
         if (!CodeMirror.isWordChar(next) && prev != ch && !CodeMirror.isWordChar(prev)) curType = "both";
         else return CodeMirror.Pass;
-      } else if (opening && (cm.getLine(cur.line).length == cur.ch ||
-                             isClosingBracket(next, pairs) ||
-                             /\s/.test(next))) {
+      } else if (opening) {
         curType = "both";
       } else {
         return CodeMirror.Pass;
@@ -35857,11 +35842,6 @@ function renderType(type) {
     });
   }
 
-  function isClosingBracket(ch, pairs) {
-    var pos = pairs.lastIndexOf(ch);
-    return pos > -1 && pos % 2 == 1;
-  }
-
   function charsAround(cm, pos) {
     var str = cm.getRange(Pos(pos.line, pos.ch - 1),
                           Pos(pos.line, pos.ch + 1));
@@ -35881,7 +35861,7 @@ function renderType(type) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
-// Distributed under an MIT license: http://codemirror.net/LICENSE
+// Distributed under an MIT license: https://codemirror.net/LICENSE
 
 // Define search commands. Depends on dialog.js or another
 // implementation of the openDialog method.
@@ -35977,9 +35957,6 @@ function renderType(type) {
     return query;
   }
 
-  var queryDialog =
-    '<span class="CodeMirror-search-label">Search:</span> <input type="text" style="width: 10em" class="CodeMirror-search-field"/> <span style="color: #888" class="CodeMirror-search-hint">(Use /re/ syntax for regexp search)</span>';
-
   function startSearch(cm, state, query) {
     state.queryText = query;
     state.query = parseQuery(query);
@@ -36015,7 +35992,7 @@ function renderType(type) {
             (hiding = dialog).style.opacity = .4
         })
       };
-      persistentDialog(cm, queryDialog, q, searchNext, function(event, query) {
+      persistentDialog(cm, getQueryDialog(cm), q, searchNext, function(event, query) {
         var keyName = CodeMirror.keyName(event)
         var extra = cm.getOption('extraKeys'), cmd = (extra && extra[keyName]) || CodeMirror.keyMap[cm.getOption("keyMap")][keyName]
         if (cmd == "findNext" || cmd == "findPrev" ||
@@ -36033,7 +36010,7 @@ function renderType(type) {
         findNext(cm, rev);
       }
     } else {
-      dialog(cm, queryDialog, "Search for:", q, function(query) {
+      dialog(cm, getQueryDialog(cm), "Search for:", q, function(query) {
         if (query && !state.query) cm.operation(function() {
           startSearch(cm, state, query);
           state.posFrom = state.posTo = cm.getCursor();
@@ -36065,10 +36042,19 @@ function renderType(type) {
     if (state.annotate) { state.annotate.clear(); state.annotate = null; }
   });}
 
-  var replaceQueryDialog =
-    ' <input type="text" style="width: 10em" class="CodeMirror-search-field"/> <span style="color: #888" class="CodeMirror-search-hint">(Use /re/ syntax for regexp search)</span>';
-  var replacementQueryDialog = '<span class="CodeMirror-search-label">With:</span> <input type="text" style="width: 10em" class="CodeMirror-search-field"/>';
-  var doReplaceConfirm = '<span class="CodeMirror-search-label">Replace?</span> <button>Yes</button> <button>No</button> <button>All</button> <button>Stop</button>';
+
+  function getQueryDialog(cm)  {
+    return '<span class="CodeMirror-search-label">' + cm.phrase("Search:") + '</span> <input type="text" style="width: 10em" class="CodeMirror-search-field"/> <span style="color: #888" class="CodeMirror-search-hint">' + cm.phrase("(Use /re/ syntax for regexp search)") + '</span>';
+  }
+  function getReplaceQueryDialog(cm) {
+    return ' <input type="text" style="width: 10em" class="CodeMirror-search-field"/> <span style="color: #888" class="CodeMirror-search-hint">' + cm.phrase("(Use /re/ syntax for regexp search)") + '</span>';
+  }
+  function getReplacementQueryDialog(cm) {
+    return '<span class="CodeMirror-search-label">' + cm.phrase("With:") + '</span> <input type="text" style="width: 10em" class="CodeMirror-search-field"/>';
+  }
+  function getDoReplaceConfirm(cm) {
+    return '<span class="CodeMirror-search-label">' + cm.phrase("Replace?") + '</span> <button>' + cm.phrase("Yes") + '</button> <button>' + cm.phrase("No") + '</button> <button>' + cm.phrase("All") + '</button> <button>' + cm.phrase("Stop") + '</button> ';
+  }
 
   function replaceAll(cm, query, text) {
     cm.operation(function() {
@@ -36084,11 +36070,11 @@ function renderType(type) {
   function replace(cm, all) {
     if (cm.getOption("readOnly")) return;
     var query = cm.getSelection() || getSearchState(cm).lastQuery;
-    var dialogText = '<span class="CodeMirror-search-label">' + (all ? 'Replace all:' : 'Replace:') + '</span>';
-    dialog(cm, dialogText + replaceQueryDialog, dialogText, query, function(query) {
+    var dialogText = '<span class="CodeMirror-search-label">' + (all ? cm.phrase("Replace all:") : cm.phrase("Replace:")) + '</span>';
+    dialog(cm, dialogText + getReplaceQueryDialog(cm), dialogText, query, function(query) {
       if (!query) return;
       query = parseQuery(query);
-      dialog(cm, replacementQueryDialog, "Replace with:", "", function(text) {
+      dialog(cm, getReplacementQueryDialog(cm), cm.phrase("Replace with:"), "", function(text) {
         text = parseString(text)
         if (all) {
           replaceAll(cm, query, text)
@@ -36104,7 +36090,7 @@ function renderType(type) {
             }
             cm.setSelection(cursor.from(), cursor.to());
             cm.scrollIntoView({from: cursor.from(), to: cursor.to()});
-            confirmDialog(cm, doReplaceConfirm, "Replace?",
+            confirmDialog(cm, getDoReplaceConfirm(cm), cm.phrase("Replace?"),
                           [function() {doReplace(match);}, advance,
                            function() {replaceAll(cm, query, text)}]);
           };
@@ -36136,7 +36122,7 @@ function renderType(type) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
-// Distributed under an MIT license: http://codemirror.net/LICENSE
+// Distributed under an MIT license: https://codemirror.net/LICENSE
 
 (function(mod) {
   if (true) // CommonJS
@@ -44968,6 +44954,14 @@ module.exports.outputRecord = function (type, record) {
 				value = value.map(el => el instanceof Buffer ? el : Buffer.from(el));
 			} else if (!(value instanceof Buffer)) {
 				value = Buffer.from(value);
+			}
+		}
+
+		if (value && hasField && fields[field] && fields[field].type === Date) {
+			if (fields[field][isArrayKey]) {
+				value = value.map(el => el instanceof Date ? el : new Date(el));
+			} else if (!(value instanceof Date)) {
+				value = new Date(value);
 			}
 		}
 
@@ -57923,7 +57917,7 @@ function normalizeWhitespace(line) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
-// Distributed under an MIT license: http://codemirror.net/LICENSE
+// Distributed under an MIT license: https://codemirror.net/LICENSE
 
 (function(mod) {
   if (true) // CommonJS
@@ -58135,7 +58129,7 @@ function normalizeWhitespace(line) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
-// Distributed under an MIT license: http://codemirror.net/LICENSE
+// Distributed under an MIT license: https://codemirror.net/LICENSE
 
 (function(mod) {
   if (true) // CommonJS
@@ -94556,7 +94550,7 @@ exports.AboutComponent = AboutComponent;
 /* 407 */
 /***/ (function(module, exports) {
 
-module.exports = "<div style=\"text-align:center\"><img width=\"128px\" src=\"resources/logo.svg\" alt=\"GraphQL Genie Client logo\"></div>\n\n# GraphQL Genie Client\n\n- [GraphQL Genie Client](#graphql-genie-client)\n\t- [Settings](#settings)\n\t\t\t- [Data Mode](#data-mode)\n\t- [Roadmap](#roadmap)\n\t- [Contribute or Donate](#contribute-or-donate)\n\t- [Backers](#backers)\n\t- [Thanks/Credit](#thankscredit)\n\n[![Dependency Status](https://david-dm.org/genie-team/graphql-genie-client.svg)](https://david-dm.org/genie-team/graphql-genie-client)\n[![devDependency Status](https://david-dm.org/genie-team/graphql-genie-client/dev-status.svg)](https://david-dm.org/genie-team/graphql-genie-client/?type=dev)\n\n[![donate](http://img.shields.io/liberapay/receives/aCoreyJ.svg?logo=liberapay)](https://liberapay.com/aCoreyJ/donate) \n[![patreon](https://img.shields.io/badge/patreon-donate-orange.svg)](https://www.patreon.com/acoreyj/overview) \n[![paypal](https://img.shields.io/badge/paypal-donate-blue.svg)](https://www.paypal.com/pools/c/872dOkFVLP) \t\n\n**View in github pages** [here](https://github.com/genie-team/graphql-genie-client).\n\nA React app providing a demo and example of [GraphQL Genie](https://github.com/genie-team/graphql-genie). __No coding required__.\nAll you need is to write [GraphQL Type Schema](https://graphql.org/learn/schema/) (or use the example provided). See how [GraphQL Genie](https://github.com/genie-team/graphql-genie) turns graphql type definitions into a fully featured GraphQL API with referential integrity and inverse updates. \n\nData can be mocked, stored in memory or stored in your browsers IndexedDB (so refreshing doesn't wipe out your data).\n\n## Settings\n\n#### Data Mode\n\n- Memory\n\n  - Mutations will save to memory and queries will query from memory. Reloading will erase all data\n\n- IndexedDB\n\n  - Mutations will save to browser database and queries will query from the database. Data will be saved on reload of page\n\n- Mock\n\n  - Mutations will do nothing, queries will return mock data\n\n## Roadmap\n\nAbility to export data\n\n## Contribute or Donate\n* Code Contributions\n\t* Fork\n\t* Make Changes\n\t* Run the following and make sure no failures or errors\n\t\t* npm run build\n\t\t* npm run start\n\t* Open pull request\n* Donate \n\t* Genie and other genie-team products are outcomes of a hobby and receive no other funding, any and all support would be greatly appreciated if you find Genie products useful. Your support will result in faster development of bug fixes, new features and new products.\n\t* [![donate](http://img.shields.io/liberapay/receives/aCoreyJ.svg?logo=liberapay)](https://liberapay.com/aCoreyJ/donate) (preferred)\n\t* [![patreon](https://img.shields.io/badge/patreon-donate-orange.svg)](https://www.patreon.com/acoreyj/overview) \n\t* [![paypal](https://img.shields.io/badge/paypal-donate-blue.svg)](https://www.paypal.com/pools/c/872dOkFVLP)\n\n## Backers\n\n[Your Name and link Here]\n\nIf you contribute and want a thanks callout on genie project READMEs let me know via [twitter message](https://twitter.com/aCoreyJ) (at least .25/week)\n\n## Thanks/Credit\n\n[GraphQL Faker](https://github.com/APIs-guru/graphql-faker) from which I copied the react component\n\n[Prisma GraphQL / Graphcool](https://github.com/prismagraphql/prisma) for inspiration\n\nLogo Icon made by [Freepik](http://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/) is licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/)\n"
+module.exports = "<div style=\"text-align:center\"><img width=\"128px\" src=\"resources/logo.svg\" alt=\"GraphQL Genie Client logo\"></div>\n\n# GraphQL Genie Client\n\n- [GraphQL Genie Client](#graphql-genie-client)\n\t- [Settings](#settings)\n\t\t\t- [Data Mode](#data-mode)\n\t- [Roadmap](#roadmap)\n\t- [Contribute or Donate](#contribute-or-donate)\n\t- [Backers](#backers)\n\t- [Thanks/Credit](#thankscredit)\n\n[![Dependency Status](https://david-dm.org/genie-team/graphql-genie-client.svg)](https://david-dm.org/genie-team/graphql-genie-client)\n[![devDependency Status](https://david-dm.org/genie-team/graphql-genie-client/dev-status.svg)](https://david-dm.org/genie-team/graphql-genie-client/?type=dev)\n\n[![donate](http://img.shields.io/liberapay/receives/aCoreyJ.svg?logo=liberapay)](https://liberapay.com/aCoreyJ/donate) \n[![patreon](https://img.shields.io/badge/patreon-donate-orange.svg)](https://www.patreon.com/acoreyj/overview) \n[![paypal](https://img.shields.io/badge/paypal-donate-blue.svg)](https://www.paypal.com/pools/c/872dOkFVLP) \t\n\n**View in github pages** [here](https://github.com/genie-team/graphql-genie-client).\n\nA React app providing a demo and example of [GraphQL Genie](https://github.com/genie-team/graphql-genie). __No coding required__.\nAll you need is to write [GraphQL Type Schema](https://graphql.org/learn/schema/) (or use the example provided). See how [GraphQL Genie](https://github.com/genie-team/graphql-genie) turns graphql type definitions into a fully featured GraphQL API with referential integrity and inverse updates. \n\nData can be mocked, stored in memory or stored in your browsers IndexedDB (so refreshing doesn't wipe out your data).\n\n## Settings\n\n#### Data Mode\n\n- Memory\n\n  - Mutations will save to memory and queries will query from memory. Reloading will erase all data\n\n- IndexedDB\n\n  - Mutations will save to browser database and queries will query from the database. Data will be saved on reload of page\n\n- Mock\n\n  - Mutations will do nothing, queries will return mock data\n\n## Roadmap\n\nAbility to export data\n\n## Contribute or Donate\n* Code Contributions\n\t* Fork\n\t* Make Changes\n\t* Run the following and make sure no failures or errors\n\t\t* npm run build\n\t\t* npm run start\n\t* Open pull request\n* Donate \n\t* Genie and other genie-team products are outcomes of a hobby and receive no other funding, any and all support would be greatly appreciated if you find Genie products useful. Your support will encourage faster development of bug fixes, new features and new products.\n\t* [![donate](http://img.shields.io/liberapay/receives/aCoreyJ.svg?logo=liberapay)](https://liberapay.com/aCoreyJ/donate) (preferred)\n\t* [![patreon](https://img.shields.io/badge/patreon-donate-orange.svg)](https://www.patreon.com/acoreyj/overview) \n\t* [![paypal](https://img.shields.io/badge/paypal-donate-blue.svg)](https://www.paypal.com/pools/c/872dOkFVLP)\n\n## Backers\n\n[Your Name and link Here]\n\nIf you contribute and want a thanks callout on genie project READMEs let me know via [twitter message](https://twitter.com/aCoreyJ) (at least .25/week)\n\n## Thanks/Credit\n\n[GraphQL Faker](https://github.com/APIs-guru/graphql-faker) from which I copied the react component\n\n[Prisma GraphQL / Graphcool](https://github.com/prismagraphql/prisma) for inspiration\n\nLogo Icon made by [Freepik](http://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/) is licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/)\n"
 
 /***/ }),
 /* 408 */
@@ -94687,7 +94681,7 @@ var schemaLink_SchemaLink = /** @class */ (function (_super) {
 /* harmony default export */ var schemaLink = (schemaLink_SchemaLink);
 //# sourceMappingURL=schemaLink.js.map
 // CONCATENATED MODULE: ./node_modules/apollo-link-schema/lib/index.js
-/* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "SchemaLink", function() { return schemaLink_SchemaLink; });
+/* concated harmony reexport SchemaLink */__webpack_require__.d(__webpack_exports__, "SchemaLink", function() { return schemaLink_SchemaLink; });
 
 //# sourceMappingURL=index.js.map
 
