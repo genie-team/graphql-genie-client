@@ -103,6 +103,7 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 					});
 				}
 				console.log('created schema');
+				window['genie'] = genie;
 				resolve(genie);
 			});
 			return schemaPromise;
@@ -159,6 +160,7 @@ class GenieEditor extends React.Component<any, GenieEditorState> {
 	saveUserIDL = (): void => {
 		const { value, dirty } = this.state;
 		if (!dirty) return;
+// tslint:disable-next-line: no-floating-promises
 		this.updateIdl(value).then(success => {
 			if (!success) return;
 			localStorage.setItem('currIDL', value || '');

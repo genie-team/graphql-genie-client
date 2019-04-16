@@ -42759,6 +42759,7 @@ var GenieEditor = /** @class */ (function (_super) {
             var _a = _this.state, value = _a.value, dirty = _a.dirty;
             if (!dirty)
                 return;
+            // tslint:disable-next-line: no-floating-promises
             _this.updateIdl(value).then(function (success) {
                 if (!success)
                     return;
@@ -42867,6 +42868,7 @@ var GenieEditor = /** @class */ (function (_super) {
                     });
                 }
                 console.log('created schema');
+                window['genie'] = genie_1;
                 resolve(genie_1);
             });
             return schemaPromise;
