@@ -287,8 +287,8 @@ acorn-jsx@^5.0.0:
   resolved "https://registry.yarnpkg.com/acorn-jsx/-/acorn-jsx-5.0.1.tgz#32a064fd925429216a09b141102bfdd185fae40e"
 
 acorn@^6.0.5, acorn@^6.0.7:
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/acorn/-/acorn-6.1.1.tgz#7d25ae05bb8ad1f9b699108e1094ecd7884adc1f"
+  version "6.4.1"
+  resolved "https://registry.yarnpkg.com/acorn/-/acorn-6.4.1.tgz#531e58ba3f51b9dacb9a6646ca4debf5b14ca474"
 
 ajv-errors@^1.0.0:
   version "1.0.1"
@@ -2110,9 +2110,9 @@ graphql-genie-subscriptions@^1.0.11:
   version "1.0.12"
   resolved "https://registry.yarnpkg.com/graphql-genie-subscriptions/-/graphql-genie-subscriptions-1.0.12.tgz#5fc1fd41a91bd925e72e0e3ca07b60502d9a5c3f"
 
-graphql-genie@^0.4.21:
-  version "0.4.21"
-  resolved "https://registry.yarnpkg.com/graphql-genie/-/graphql-genie-0.4.21.tgz#97616c83a82dcfa7282069a1db74ddd7c88327df"
+graphql-genie@0.4.22:
+  version "0.4.22"
+  resolved "https://registry.yarnpkg.com/graphql-genie/-/graphql-genie-0.4.22.tgz#c488316cffc36f7a2cfcc1fb1942f4db531b2eb4"
   dependencies:
     abab "^2.0.0"
     graphql-iso-date "^3.6.1"
