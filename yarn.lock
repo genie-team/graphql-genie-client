@@ -882,8 +882,8 @@ codemirror-graphql@^0.7.1:
     graphql-language-service-parser "^1.2.2"
 
 codemirror@^5.26.0:
-  version "5.44.0"
-  resolved "https://registry.yarnpkg.com/codemirror/-/codemirror-5.44.0.tgz#80dc2a231eeb7aab25ec2405cdca37e693ccf9cc"
+  version "5.61.0"
+  resolved "https://registry.yarnpkg.com/codemirror/-/codemirror-5.61.0.tgz#318e5b034a707207948b92ffc2862195e8fdb08e"
 
 collection-visit@^1.0.0:
   version "1.0.0"
@@ -2110,9 +2110,9 @@ graphql-genie-subscriptions@^1.0.11:
   version "1.0.12"
   resolved "https://registry.yarnpkg.com/graphql-genie-subscriptions/-/graphql-genie-subscriptions-1.0.12.tgz#5fc1fd41a91bd925e72e0e3ca07b60502d9a5c3f"
 
-graphql-genie@^0.4.21:
-  version "0.4.21"
-  resolved "https://registry.yarnpkg.com/graphql-genie/-/graphql-genie-0.4.21.tgz#97616c83a82dcfa7282069a1db74ddd7c88327df"
+graphql-genie@0.4.22:
+  version "0.4.22"
+  resolved "https://registry.yarnpkg.com/graphql-genie/-/graphql-genie-0.4.22.tgz#c488316cffc36f7a2cfcc1fb1942f4db531b2eb4"
   dependencies:
     abab "^2.0.0"
     graphql-iso-date "^3.6.1"
