@@ -2110,9 +2110,9 @@ graphql-genie-subscriptions@^1.0.11:
   version "1.0.12"
   resolved "https://registry.yarnpkg.com/graphql-genie-subscriptions/-/graphql-genie-subscriptions-1.0.12.tgz#5fc1fd41a91bd925e72e0e3ca07b60502d9a5c3f"
 
-graphql-genie@^0.4.21:
-  version "0.4.21"
-  resolved "https://registry.yarnpkg.com/graphql-genie/-/graphql-genie-0.4.21.tgz#97616c83a82dcfa7282069a1db74ddd7c88327df"
+graphql-genie@0.4.22:
+  version "0.4.22"
+  resolved "https://registry.yarnpkg.com/graphql-genie/-/graphql-genie-0.4.22.tgz#c488316cffc36f7a2cfcc1fb1942f4db531b2eb4"
   dependencies:
     abab "^2.0.0"
     graphql-iso-date "^3.6.1"
@@ -3895,8 +3895,8 @@ postcss-value-parser@^3.0.0, postcss-value-parser@^3.3.0, postcss-value-parser@^
   resolved "https://registry.yarnpkg.com/postcss-value-parser/-/postcss-value-parser-3.3.1.tgz#9ff822547e2893213cf1c30efa51ac5fd1ba8281"
 
 postcss@^7.0.0, postcss@^7.0.1, postcss@^7.0.14, postcss@^7.0.5, postcss@^7.0.6:
-  version "7.0.14"
-  resolved "https://registry.yarnpkg.com/postcss/-/postcss-7.0.14.tgz#4527ed6b1ca0d82c53ce5ec1a2041c2346bbd6e5"
+  version "7.0.36"
+  resolved "https://registry.yarnpkg.com/postcss/-/postcss-7.0.36.tgz#056f8cffa939662a8f5905950c07d5285644dfcb"
   dependencies:
     chalk "^2.4.2"
     source-map "^0.6.1"
