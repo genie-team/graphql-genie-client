@@ -1289,8 +1289,8 @@ decamelize@^2.0.0:
     xregexp "4.0.0"
 
 decode-uri-component@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/decode-uri-component/-/decode-uri-component-0.2.0.tgz#eb3913333458775cb84cd1a1fae062106bb87545"
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/decode-uri-component/-/decode-uri-component-0.2.2.tgz#e69dbe25d37941171dd540e024c444cd5188e1e9"
 
 deep-equal@^1.0.1:
   version "1.0.1"
@@ -2110,9 +2110,9 @@ graphql-genie-subscriptions@^1.0.11:
   version "1.0.12"
   resolved "https://registry.yarnpkg.com/graphql-genie-subscriptions/-/graphql-genie-subscriptions-1.0.12.tgz#5fc1fd41a91bd925e72e0e3ca07b60502d9a5c3f"
 
-graphql-genie@^0.4.21:
-  version "0.4.21"
-  resolved "https://registry.yarnpkg.com/graphql-genie/-/graphql-genie-0.4.21.tgz#97616c83a82dcfa7282069a1db74ddd7c88327df"
+graphql-genie@0.4.22:
+  version "0.4.22"
+  resolved "https://registry.yarnpkg.com/graphql-genie/-/graphql-genie-0.4.22.tgz#c488316cffc36f7a2cfcc1fb1942f4db531b2eb4"
   dependencies:
     abab "^2.0.0"
     graphql-iso-date "^3.6.1"
